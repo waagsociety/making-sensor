@@ -1,0 +1,8 @@
+user MSAdmin
+topic read $SYS/#
+ 
+user MSSubscriber
+topic read sensor/#
+ 
+user MSPublisher
+pattern write sensor/%c/data
