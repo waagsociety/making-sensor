@@ -23,7 +23,7 @@ do
   #MY_MSG="{\"measure\":\"${RND_TXT}\",\"id\":${ID}}"
   MY_MSG="{\"measure\":\"${ID}_${MSR}\",\"id\":${ID}}"
 
-	RESULT="$(/usr/local/bin/mosquitto_pub -h ${MY_HOST} -u ${MY_USER} -P ${MY_PASSWD} -i ${ID} -t sensor/${ID}/data -m $MY_MSG -q ${MY_QOS} 2>&1 ) "
+	RESULT="$(mosquitto_pub -h ${MY_HOST} -u ${MY_USER} -P ${MY_PASSWD} -i ${ID} -t sensor/${ID}/data -m $MY_MSG -q ${MY_QOS} 2>&1 ) "
   #echo _${RESULT}_
 
 	#if ! echo ${RESULT} | gSENSORS "${1}" >/dev/null
