@@ -1,0 +1,5 @@
+/puphpet/files/dot/ssh/
+/conf/makingsense.yaml
+/setuptools-*
+/.ssh
+/.vagrant
