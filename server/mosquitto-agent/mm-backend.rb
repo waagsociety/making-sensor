@@ -5,7 +5,7 @@ require 'pg'
 
 
 dir = File.dirname(File.expand_path(__FILE__))
-ms_conf = YAML.load_file("#{dir}/makingsense.yaml")
+ms_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 
 puts ms_conf
 

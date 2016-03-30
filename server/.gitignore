@@ -3,3 +3,6 @@
 /setuptools-*
 /.ssh
 /.vagrant
+/.bash_history
+/.cache/
+/.gem/
