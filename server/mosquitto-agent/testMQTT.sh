@@ -1,6 +1,6 @@
-if (( $# != 3 ))
+if (( $# != 5 ))
 then
-  echo "Usage: ${0} SENSORS MEASURES RUNS"
+  echo "Usage: ${0} <nr sensors> <nr measures> <nr runs> <user> <password>"
   exit 1;
 fi
 
@@ -8,8 +8,9 @@ SENSORS=${1}
 MEASURES=${2}
 RUNS=${3}
 
-MY_USER=MSPublisher
-MY_PASSWD=ferf345gootkndssdyrwt
+MY_USER=${3}
+MY_PASSWD=${4}
+MY_PASSWD='adfwrtsdhrtwer@'
 MY_QOS=1
 MY_HOST=wg66.waag.org
 
