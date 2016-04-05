@@ -51,7 +51,7 @@ do
 	#echo ${c};
   echo "Measure nr. ${c}"
 	publish ${c} &
-  sleep 1
+  #sleep 1
 done
 
 wait
