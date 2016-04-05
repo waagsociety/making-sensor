@@ -8,9 +8,8 @@ SENSORS=${1}
 MEASURES=${2}
 RUNS=${3}
 
-MY_USER=${3}
-MY_PASSWD=${4}
-MY_PASSWD='adfwrtsdhrtwer@'
+MY_USER=${4}
+MY_PASSWD=${5}
 MY_QOS=1
 MY_HOST=wg66.waag.org
 
@@ -28,17 +27,18 @@ do
 
   while true
   do
-	   RESULT="$(mosquitto_pub -h ${MY_HOST} -u ${MY_USER} -P ${MY_PASSWD} -i ${ID} -t sensor/${ID}/data -m $MY_MSG -q ${MY_QOS} 2>&1 ) "
-     #echo _${RESULT}_
+	#echo "mosquitto_pub -h ${MY_HOST} -u \"${MY_USER}\" -P \"${MY_PASSWD}\" -i \"${ID}\" -t \"sensor/${ID}/data\" -m \"$MY_MSG\" -q ${MY_QOS} 2>&1"
+	RESULT="$(mosquitto_pub -h ${MY_HOST} -u "${MY_USER}" -P "${MY_PASSWD}" -i "${ID}" -t "sensor/${ID}/data" -m "$MY_MSG" -q ${MY_QOS} 2>&1 ) "
+	#echo _${RESULT}_
 
-	  #if ! echo ${RESULT} | gSENSORS "${1}" >/dev/null
-	  if [ "${RESULT} " != "  " ]
-	  then
-		  echo "ERROR: ${RESULT}, retrying"
-	  else
-      break
-		  #echo "DONE"
-	  fi
+	#if ! echo ${RESULT} | gSENSORS "${1}" >/dev/null
+	if [ "${RESULT} " != "  " ]
+	then
+		echo "ERROR: ${RESULT}, retrying"
+	else
+		break
+		#echo "DONE"
+	fi
   done
   RND_SLEEP="0.$[ 1 + $[ RANDOM % 9 ]]"
   sleep ${RND_SLEEP}
@@ -50,9 +50,9 @@ function test {
 for (( c=1; c<=${MEASURES}; c++ ))
 do
 	#echo ${c};
-  echo "Measure nr. ${c}"
+	echo "Measure nr. ${c}"
 	publish ${c} &
-  #sleep 1
+	sleep 1
 done
 
 wait
