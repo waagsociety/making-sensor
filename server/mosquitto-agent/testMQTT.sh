@@ -10,7 +10,6 @@ RUNS=${3}
 
 MY_USER=${3}
 MY_PASSWD=${4}
-MY_PASSWD='adfwrtsdhrtwer@'
 MY_QOS=1
 MY_HOST=wg66.waag.org
 
