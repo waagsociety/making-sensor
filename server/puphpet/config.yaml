@@ -296,7 +296,6 @@ ruby:
                 - activesupport
                 - vine
                 - sinatra
-                - unicorn
 python:
     install: '1'
     packages: {  }

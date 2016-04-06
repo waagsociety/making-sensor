@@ -40,9 +40,12 @@ while true do
 
   id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
 
-  res = conn.exec('INSERT INTO measures (sensor_id, topic, measures, measure_ts) VALUES ($1, $2, $3, $4)',[id,topic, measure, ts])
+  res = conn.exec("INSERT INTO #{ms_conf['db']['measurestable']} (sensor_id, topic, measures, measure_ts) VALUES ($1, $2, $3, $4)",[id,topic, measure, ts])
 
 end
 
-client.disconnect()
-conn.close()
+at_exit do
+  puts "Closing MQTT and DB connections"
+  client.disconnect()
+  conn.close()
+end

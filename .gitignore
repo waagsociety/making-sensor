@@ -1,0 +1,3 @@
+passenger.*.pid
+passenger.*.pid.lock
+airq.passenger.log
