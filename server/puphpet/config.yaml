@@ -40,7 +40,7 @@ vagrantfile:
         synced_folder:
             vflsf_7fflrs4v8424:
                 source: ./
-                target: /home/vagrant
+                target: /home/vagrant/src
                 sync_type: default
                 smb:
                     smb_host: ''
@@ -295,6 +295,8 @@ ruby:
                 - deep_merge
                 - activesupport
                 - vine
+                - sinatra
+                - unicorn
 python:
     install: '1'
     packages: {  }

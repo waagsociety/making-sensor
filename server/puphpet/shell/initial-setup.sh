@@ -21,6 +21,7 @@ touch '/.puphpet-stuff/vagrant-core-folder.txt'
 echo "${VAGRANT_CORE_FOLDER}" > '/.puphpet-stuff/vagrant-core-folder.txt'
 
 if [[ ! -f '/.puphpet-stuff/init-apt-get-update' ]] && [[ "${OS}" == 'debian' || "${OS}" == 'ubuntu' ]]; then
+    apt-get clean
     apt-get update
 
     touch '/.puphpet-stuff/init-apt-get-update'
