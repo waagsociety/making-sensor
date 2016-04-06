@@ -2,7 +2,7 @@ require 'sinatra'
 require 'rubygems'
 require 'yaml'
 require 'pg'
-
+require 'json'
 
 
 class AirqApp < Sinatra::Base
@@ -21,7 +21,14 @@ class AirqApp < Sinatra::Base
       :password => ms_conf['db']['password']
     )
     res= conn.exec("SELECT * FROM #{ms_conf['db']['measurestable']}")
-    puts res
+    puts res.cmd_status()
+    if res.cmd_tuples() > 0
+      res.each { |tuple|
+        puts tuple
+      }
+    end
+
     conn.close()
+
   end
 end
