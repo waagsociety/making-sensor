@@ -22,18 +22,26 @@ class AirqApp < Sinatra::Base
       :user => ms_conf['db']['user'],
       :password => ms_conf['db']['password']
     )
-    res= conn.exec("SELECT * FROM #{ms_conf['db']['measurestable']}")
+    #WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM measures GROUP BY id) SELECT * from measures m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS
+
+    res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['db']['measurestable']} GROUP BY id) " +
+      "SELECT * from  #{ms_conf['db']['measurestable']} m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS")
     conn.close()
     puts "status " + res.cmd_status().to_s
     puts "tuples " + res.ntuples().to_s
     if res.cmd_tuples() > 0
       msgs = []
       res.each {|tuple|
-        #id,tmstp,rssi,temp,pm10,pm2.5,no2a,no2b,lat,lon
+        #id,tmstp,rssi,temp,pm10,pm25,no2a,no2b,lat,lon
         msg = {
-          :id => tuple["sensor_id"],
-          :tmstp => tuple["measure_ts"],
-          :no2a => tuple["measures"]
+          :id => tuple["id"],
+          :srv_ts => tuple["srv_ts"],
+          :rssi => tuple["rssi"],
+          :temp => tuple["temp"],
+          :pm10 => tuple["pm10"],
+          :pm25 => tuple["pm25"],
+          :no2a => tuple["no2a"],
+          :no2b => tuple["no2b"]
         }
         puts "hash " + msg.to_s
 #        content_type :json

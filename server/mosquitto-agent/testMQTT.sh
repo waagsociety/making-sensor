@@ -18,10 +18,11 @@ MSR=${1}
 for (( d=1; d<=${SENSORS}; d++ ))
 do
   ID="${d}"
+  ID=$(echo $[ 1 + $[ RANDOM % 15 ]])
 
   #RND_TXT=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   #MY_MSG="{\"measure\":\"${RND_TXT}\",\"id\":${ID}}"
-  MY_MSG="{\"measure\":\"${ID}_${MSR}\",\"id\":${ID}}"
+  MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
 
   #echo "Sensor nr. ${d}"
 

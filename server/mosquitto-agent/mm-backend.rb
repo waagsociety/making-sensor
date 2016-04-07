@@ -2,6 +2,7 @@ require 'rubygems'
 require 'mqtt'
 require 'yaml'
 require 'pg'
+require 'json'
 
 
 dir = File.dirname(File.expand_path(__FILE__))
@@ -31,16 +32,23 @@ conn = PGconn.open(
   :password => ms_conf['db']['password']
 )
 
+conn.prepare("sensordata", "INSERT INTO #{ms_conf['db']['measurestable']} (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b) " +
+  "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric)")
+
 while true do
   # Subscribe example
-  topic,measure = client.get()
-  ts = Time.now.strftime('%Y-%m-%d %H:%M:%S.%L%z')
+  topic,msg = client.get()
+  srv_ts = Time.now.strftime('%Y-%m-%d %H:%M:%S.%L%z')
 
-  puts "#{topic} #{measure} #{ts}"
+  #msg.gsub!("pm2.5","pm25")
 
-  id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
+  msg_hash = JSON.parse(msg,symbolize_names: true)
 
-  res = conn.exec("INSERT INTO #{ms_conf['db']['measurestable']} (sensor_id, topic, measures, measure_ts) VALUES ($1, $2, $3, $4)",[id,topic, measure, ts])
+  puts "#{topic} #{msg} #{srv_ts} " + msg_hash.to_s
+
+  #id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
+
+  res = conn.exec_prepared("sensordata",[msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10], msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b]])
 
 end
 
