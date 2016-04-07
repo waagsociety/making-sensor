@@ -1,8 +1,10 @@
-require 'sinatra'
+require 'sinatra/base'
+require 'sinatra/json'
+require 'json'
 require 'rubygems'
 require 'yaml'
 require 'pg'
-require 'json'
+
 
 
 class AirqApp < Sinatra::Base
@@ -21,14 +23,28 @@ class AirqApp < Sinatra::Base
       :password => ms_conf['db']['password']
     )
     res= conn.exec("SELECT * FROM #{ms_conf['db']['measurestable']}")
-    puts res.cmd_status()
+    conn.close()
+    puts "status " + res.cmd_status().to_s
+    puts "tuples " + res.ntuples().to_s
     if res.cmd_tuples() > 0
-      res.each { |tuple|
-        puts tuple
+      msgs = []
+      res.each {|tuple|
+        #id,tmstp,rssi,temp,pm10,pm2.5,no2a,no2b,lat,lon
+        msg = {
+          :id => tuple["sensor_id"],
+          :tmstp => tuple["measure_ts"],
+          :no2a => tuple["measures"]
+        }
+        puts "hash " + msg.to_s
+#        content_type :json
+        msgs.push(msg)
       }
+      json msgs
     end
 
-    conn.close()
+  end
 
+  get '/' do
+    json :alive => 'yes'
   end
 end

@@ -296,6 +296,7 @@ ruby:
                 - activesupport
                 - vine
                 - sinatra
+                - sinatra-contrib
 python:
     install: '1'
     packages: {  }
