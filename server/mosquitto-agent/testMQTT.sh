@@ -18,7 +18,7 @@ MSR=${1}
 for (( d=1; d<=${SENSORS}; d++ ))
 do
   ID="${d}"
-  ID=$(echo $[ 1 + $[ RANDOM % 15 ]])
+  #ID=$(echo $[ 1 + $[ RANDOM % 15 ]])
 
   #RND_TXT=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   #MY_MSG="{\"measure\":\"${RND_TXT}\",\"id\":${ID}}"
