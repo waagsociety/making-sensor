@@ -290,7 +290,7 @@ ruby:
         rv_may330b80e41:
             default: '1'
             bundler: '1'
-            version: 2.3.0
+            version: 2.1.5
             gems:
                 - deep_merge
                 - activesupport

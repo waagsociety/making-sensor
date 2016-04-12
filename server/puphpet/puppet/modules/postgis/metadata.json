@@ -1,0 +1,39 @@
+{
+  "name": "camptocamp-postgis",
+  "version": "2.2.16",
+  "author": "Camptocamp",
+  "summary": "Camptocamp Postgis Module",
+  "license": "Apache-2.0",
+  "source": "https://github.com/camptocamp/puppet-postgis",
+  "project_page": "https://github.com/camptocamp/puppet-postgis",
+  "issues_url": "https://github.com/camptocamp/puppet-postgis/issues",
+  "dependencies": [
+    {"name":"puppetlabs/postgresql","version_requirement":">= 3.4.0"}
+  ],
+  "description": "Postgis Module for Puppet",
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "6",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "14.04",
+        "14.10",
+        "15.04"
+      ]
+    },
+    {
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "6",
+        "7"
+      ]
+    }
+  ]
+}

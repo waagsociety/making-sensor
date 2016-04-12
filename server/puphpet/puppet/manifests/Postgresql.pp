@@ -144,5 +144,5 @@ class puphpet_postgresql (
       owner    => 'www-data',
     }
   }
-
+  include ::postgis
 }
