@@ -297,6 +297,7 @@ ruby:
                 - vine
                 - sinatra
                 - sinatra-contrib
+                - faraday
 python:
     install: '1'
     packages: {  }

@@ -13,61 +13,14 @@ SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 
-CREATE ROLE airqagent LOGIN
-  ENCRYPTED PASSWORD 'md5bb10ec1348e0952788b8c2a169735bd3'
-  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
-
---
--- TOC entry 2035 (class 1262 OID 16385)
--- Name: airq; Type: DATABASE; Schema: -; Owner: airqagent
---
-
-CREATE DATABASE airq WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.UTF-8' LC_CTYPE = 'en_US.UTF-8';
-
-
-ALTER DATABASE airq OWNER TO airqagent;
-
-\connect airq
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SET check_function_bodies = false;
-SET client_min_messages = warning;
-
---
--- TOC entry 5 (class 2615 OID 2200)
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
---
 
 CREATE SCHEMA public;
 
-
 ALTER SCHEMA public OWNER TO postgres;
-
---
--- TOC entry 2036 (class 0 OID 0)
--- Dependencies: 5
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
---
 
 COMMENT ON SCHEMA public IS 'standard public schema';
 
-
---
--- TOC entry 173 (class 3079 OID 11893)
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
---
-
 CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- TOC entry 2038 (class 0 OID 0)
--- Dependencies: 173
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner:
---
 
 COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
@@ -78,14 +31,25 @@ SET default_tablespace = '';
 
 SET default_with_oids = false;
 
---
--- TOC entry 172 (class 1259 OID 16397)
--- Name: measures; Type: TABLE; Schema: public; Owner: airqagent; Tablespace:
---
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
--- Table: measures
+CREATE ROLE airqagent LOGIN
+  ENCRYPTED PASSWORD 'md5bb10ec1348e0952788b8c2a169735bd3'
+  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
 
--- DROP TABLE measures;
+
+CREATE DATABASE airq
+  WITH OWNER = airqagent
+       ENCODING = 'UTF8'
+       TABLESPACE = pg_default
+       LC_COLLATE = 'en_US.UTF-8'
+       LC_CTYPE = 'en_US.UTF-8'
+       CONNECTION LIMIT = -1;
+
+\connect airq
 
 CREATE TABLE measures
 (
@@ -107,20 +71,34 @@ ALTER TABLE measures
   OWNER TO airqagent;
 
 
---
--- TOC entry 2037 (class 0 OID 0)
--- Dependencies: 5
--- Name: public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
+CREATE ROLE trafficagent LOGIN
+  ENCRYPTED PASSWORD 'md5d76679c3f866741317ca56016448d19a'
+  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
 
 
--- Completed on 2016-04-07 15:38:23 CEST
+CREATE DATABASE traffic
+  WITH OWNER = trafficagent
+       ENCODING = 'UTF8'
+       TABLESPACE = pg_default
+       LC_COLLATE = 'en_US.UTF-8'
+       LC_CTYPE = 'en_US.UTF-8'
+       CONNECTION LIMIT = -1;
 
---
--- PostgreSQL database dump complete
---
+\connect traffic
+
+CREATE TABLE traveltime
+(
+  id character varying(100) NOT NULL,
+  name character varying(100) NOT NULL,
+  type character varying(10) NOT NULL,
+  timestmp timestamp with time zone NOT NULL,
+  length integer NOT NULL,
+  traveltime integer,
+  velocity integer,
+  CONSTRAINT id_timestamp PRIMARY KEY (id, timestmp)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE traveltime
+  OWNER TO trafficagent;

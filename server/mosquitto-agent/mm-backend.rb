@@ -23,16 +23,16 @@ client = MQTT::Client.connect(
 client.subscribe([ms_conf['mqtt']['topic'],ms_conf['mqtt']['QoS']])
 
 conn = PGconn.open(
-  :host => ms_conf['db']['host'],
-  :port => ms_conf['db']['port'],
-  :options => ms_conf['db']['options'],
-  :tty =>  ms_conf['db']['tty'],
-  :dbname => ms_conf['db']['dbname'],
-  :user => ms_conf['db']['user'],
-  :password => ms_conf['db']['password']
+  :host => ms_conf['airqdb']['host'],
+  :port => ms_conf['airqdb']['port'],
+  :options => ms_conf['airqdb']['options'],
+  :tty =>  ms_conf['airqdb']['tty'],
+  :dbname => ms_conf['airqdb']['dbname'],
+  :user => ms_conf['airqdb']['user'],
+  :password => ms_conf['airqdb']['password']
 )
 
-conn.prepare("sensordata", "INSERT INTO #{ms_conf['db']['measurestable']} (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b) " +
+conn.prepare("sensordata", "INSERT INTO #{ms_conf['airqdb']['measurestable']} (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b) " +
   "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric)")
 
 while true do
