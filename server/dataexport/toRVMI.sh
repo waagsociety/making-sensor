@@ -26,7 +26,7 @@ OUTPUTFILE="${TMP_DIR}/airq.${NOW}.csv"
 HEADERS="id,srv_ts,rssi,temp,pm10,pm25,no2a,no2b"
 DBNAME=airq
 
-echo ${HEADERS} > ${OUTPUTFILE}
+echo "#${HEADERS}" > ${OUTPUTFILE}
 
 sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone;\" " >> ${OUTPUTFILE}
 
@@ -37,5 +37,3 @@ then
 fi
 
 sudo scp -i /home/airqdaemon/.ssh/id_rsa ${OUTPUTFILE} waag@sftp.rivm.nl:/incoming/waag
-
-
