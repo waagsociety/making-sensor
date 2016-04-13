@@ -6,6 +6,7 @@ class puphpet_postgresql (
   $hhvm
 ) {
 
+
   include puphpet::apache::params
 
   if array_true($apache, 'install') or array_true($nginx, 'install') {
@@ -43,9 +44,13 @@ class puphpet_postgresql (
     'postgresql::globals' => $global_settings
   })
 
+  class { 'postgresql::server::postgis': }
+  
   create_resources('class', {
     'postgresql::server' => $server_settings
   })
+
+
 
   Postgresql::Server::Role <| |>
   -> Postgresql::Server::Database <| |>
@@ -144,5 +149,4 @@ class puphpet_postgresql (
       owner    => 'www-data',
     }
   }
-  include ::postgis
 }

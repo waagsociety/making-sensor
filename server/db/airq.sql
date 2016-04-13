@@ -86,6 +86,9 @@ CREATE DATABASE traffic
 
 \connect traffic
 
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+
 CREATE TABLE traveltime
 (
   id character varying(100) NOT NULL,
@@ -95,6 +98,7 @@ CREATE TABLE traveltime
   length integer NOT NULL,
   traveltime integer,
   velocity integer,
+  coordinates geometry NOT NULL,
   CONSTRAINT id_timestamp PRIMARY KEY (id, timestmp)
 )
 WITH (

@@ -4,6 +4,9 @@ require 'pg'
 require 'yaml'
 
 
+# http://tools.amsterdamopendata.nl/ndw/data/reistijdenAmsterdam.geojson
+# http://data.amsterdam.nl/dataset/actuele_verkeersgegevens_nationaal
+
 def httpget(host, path, timeout=5, open_timeout=2)
 
   connection = Faraday.new(host)
@@ -36,8 +39,8 @@ def conn_on(tt_conf)
     :password => tt_conf['trafficdb']['password']
   )
 
-  conn.prepare("trafficdata", "INSERT INTO #{tt_conf['trafficdb']['traffictable']} (id,name,type,timestmp,length,traveltime,velocity)" +
-      " SELECT $1::character varying(100), $2::character varying(100), $3::character varying(10),$4::timestamp with time zone, $5::integer, $6::integer, $7::integer" +
+  conn.prepare("trafficdata", "INSERT INTO #{tt_conf['trafficdb']['traffictable']} (id,name,type,timestmp,length,traveltime,velocity, coordinates)" +
+      " SELECT $1::character varying(100), $2::character varying(100), $3::character varying(10),$4::timestamp with time zone, $5::integer, $6::integer, $7::integer, ST_GeomFromText($8::text)" +
       " WHERE NOT EXISTS (SELECT 1 FROM #{tt_conf['trafficdb']['traffictable']} WHERE id=$1::character varying(100) AND timestmp = $4::timestamp with time zone);" )
 
   return conn
@@ -47,13 +50,21 @@ def conn_off(conn)
   conn.close()
 end
 
-def parse_traject(traject)
-  #puts traject.to_s
-  return traject
+def parse_traject(properties, geometry)
+  tuples = geometry['coordinates'].map { |coordinate|
+     coordinate.join(' ')
+   }.join(',')
+
+  #puts tuples
+
+  properties['coordinates'] = geometry['type'] + '(' + tuples + ')'
+  #puts properties.to_s
+
+  return properties
 end
 
 def insert_data(conn,data)
-  res = conn.exec_prepared("trafficdata",[data["Id"], data["Name"], data["Type"], data["Timestamp"], data["Length"], data["Traveltime"], data["Velocity"]])
+  res = conn.exec_prepared("trafficdata",[data['Id'], data['Name'], data['Type'], data['Timestamp'], data['Length'], data['Traveltime'], data['Velocity'],data['coordinates']])
 end
 
 
@@ -67,9 +78,9 @@ if response.status == 200
   begin
     trajecten = JSON.parse(response.body)
     conn = conn_on(tt_conf)
-    trajecten["features"].each do |traject|
+    trajecten['features'].each do |traject|
       begin
-      data = parse_traject(traject['properties'])
+      data = parse_traject(traject['properties'], traject['geometry'])
       insert_data(conn,data)
       rescue Exception => e
         $stderr.puts "Error: " + e.message + " in processing line: " + traject.to_s + ", continuing"
