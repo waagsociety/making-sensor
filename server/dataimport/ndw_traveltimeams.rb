@@ -9,10 +9,16 @@ def httpget(host, path, timeout=5, open_timeout=2)
   connection = Faraday.new(host)
   response = ''
 
-  response = connection.get do |req|
-    req.url(path)
-    req.options[:timeout] = timeout
-    req.options[:open_timeout] = open_timeout
+  begin
+    response = connection.get do |req|
+      req.url(path)
+      req.options[:timeout] = timeout
+      req.options[:open_timeout] = open_timeout
+    end
+  rescue Exception => e
+    $stderr.puts "Error: " + e.message + " in getting json, response: " + response.to_s + ", skipping time slot"
+    # avoid parsing the response further in the code
+    response.status = 500
   end
 
   return response
