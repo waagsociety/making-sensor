@@ -14,18 +14,18 @@ class AirqApp < Sinatra::Base
   get '/lastsensordata' do
     puts ms_conf
     conn = PGconn.open(
-      :host => ms_conf['db']['host'],
-      :port => ms_conf['db']['port'],
-      :options => ms_conf['db']['options'],
-      :tty =>  ms_conf['db']['tty'],
-      :dbname => ms_conf['db']['dbname'],
-      :user => ms_conf['db']['user'],
-      :password => ms_conf['db']['password']
+      :host => ms_conf['airqdb']['host'],
+      :port => ms_conf['airqdb']['port'],
+      :options => ms_conf['airqdb']['options'],
+      :tty =>  ms_conf['airqdb']['tty'],
+      :dbname => ms_conf['airqdb']['dbname'],
+      :user => ms_conf['airqdb']['user'],
+      :password => ms_conf['airqdb']['password']
     )
     #WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM measures GROUP BY id) SELECT * from measures m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS
 
-    res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['db']['measurestable']} GROUP BY id) " +
-      "SELECT * from  #{ms_conf['db']['measurestable']} m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS")
+    res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['airqdb']['measurestable']} GROUP BY id) " +
+      "SELECT * from  #{ms_conf['airqdb']['measurestable']} m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS")
     conn.close()
     puts "status " + res.cmd_status().to_s
     puts "tuples " + res.ntuples().to_s
