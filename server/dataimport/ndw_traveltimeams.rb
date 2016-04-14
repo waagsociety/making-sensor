@@ -1,16 +1,24 @@
 require 'faraday'
+require 'faraday_middleware'
 require 'json'
 require 'pg'
 require 'yaml'
 
 
 # http://tools.amsterdamopendata.nl/ndw/data/reistijdenAmsterdam.geojson
+# http://data.amsterdam.nl/dataset/realtime-verkeersdata/resource/217a9825-2338-49e6-a5f9-38399575f836#
 # http://data.amsterdam.nl/dataset/actuele_verkeersgegevens_nationaal
 
 def httpget(host, path, timeout=5, open_timeout=2)
 
-  connection = Faraday.new(host)
-  response = ''
+  connection = Faraday.new(host) do |c|
+    c.use FaradayMiddleware::FollowRedirects, limit: 3
+    c.use Faraday::Response::RaiseError       # raise exceptions on 40x, 50x responses
+    c.use Faraday::Adapter::NetHttp
+  end
+
+  response = nil
+  nretry = 10
 
   begin
     response = connection.get do |req|
@@ -18,10 +26,8 @@ def httpget(host, path, timeout=5, open_timeout=2)
       req.options[:timeout] = timeout
       req.options[:open_timeout] = open_timeout
     end
-  rescue Exception => e
-    $stderr.puts "Error: " + e.message + " in getting json, response: " + response.to_s + ", skipping time slot"
-    # avoid parsing the response further in the code
-    response.status = 500
+  rescue Faraday::Error::ClientError => e
+    $stderr.puts "Error: #{e.class.name}, #{e.message} in getting json, response: #{response.to_s}, skipping time slot"
   end
 
   return response
@@ -73,8 +79,7 @@ tt_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 
 response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'])
 
-if response.status == 200
-
+if (response.is_a?(Faraday::Response) && response.status == 200)
   begin
     trajecten = JSON.parse(response.body)
     conn = conn_on(tt_conf)

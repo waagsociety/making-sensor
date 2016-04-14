@@ -298,6 +298,7 @@ ruby:
                 - sinatra
                 - sinatra-contrib
                 - faraday
+                - faraday_middleware
 python:
     install: '1'
     packages: {  }
