@@ -53,7 +53,9 @@ def conn_on(tt_conf)
 end
 
 def conn_off(conn)
-  conn.close()
+  unless conn.nil?
+    conn.close()
+  end
 end
 
 def parse_traject(properties, geometry)
@@ -74,10 +76,12 @@ def insert_data(conn,data)
 end
 
 
+conn = nil
 dir = File.dirname(File.expand_path(__FILE__))
 tt_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 
 response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'])
+
 
 if (response.is_a?(Faraday::Response) && response.status == 200)
   begin
@@ -91,8 +95,12 @@ if (response.is_a?(Faraday::Response) && response.status == 200)
         $stderr.puts "Error: " + e.message + " in processing line: " + traject.to_s + ", continuing"
       end
     end
-    conn_off(conn)
   rescue Exception => e
     $stderr.puts "Error: " + e.message + " in processing response: " + response.body + ", skipping"
   end
+end
+
+at_exit do
+  #puts "Closing DB connections #{conn.to_s}"
+  conn_off(conn)
 end
