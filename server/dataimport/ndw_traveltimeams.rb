@@ -9,7 +9,7 @@ require 'yaml'
 # http://data.amsterdam.nl/dataset/realtime-verkeersdata/resource/217a9825-2338-49e6-a5f9-38399575f836#
 # http://data.amsterdam.nl/dataset/actuele_verkeersgegevens_nationaal
 
-def httpget(host, path, timeout=5, open_timeout=2)
+def httpget(host, path, user_agent='Waag agent', timeout=5, open_timeout=2)
 
   connection = Faraday.new(host) do |c|
     c.use FaradayMiddleware::FollowRedirects, limit: 3
@@ -17,8 +17,9 @@ def httpget(host, path, timeout=5, open_timeout=2)
     c.use Faraday::Adapter::NetHttp
   end
 
+  connection.headers[:user_agent] = user_agent
+
   response = nil
-  nretry = 10
 
   begin
     response = connection.get do |req|
@@ -80,7 +81,7 @@ conn = nil
 dir = File.dirname(File.expand_path(__FILE__))
 tt_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 
-response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'])
+response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'], tt_conf['trafficdata']['user_agent'])
 
 
 if (response.is_a?(Faraday::Response) && response.status == 200)
