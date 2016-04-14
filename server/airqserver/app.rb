@@ -24,7 +24,7 @@ class AirqApp < Sinatra::Base
     )
     #WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM measures GROUP BY id) SELECT * from measures m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS
 
-    res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['airqdb']['measurestable']} GROUP BY id) " +
+    res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['airqdb']['measurestable']} WHERE temp IS NOT NULL GROUP BY id) " +
       "SELECT * from  #{ms_conf['airqdb']['measurestable']} m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS")
     conn.close()
     puts "status " + res.cmd_status().to_s
