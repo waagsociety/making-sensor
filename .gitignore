@@ -1,3 +1,5 @@
 passenger.*.pid
 passenger.*.pid.lock
 airq.passenger.log
+.Rproj.user
+restart.csv
