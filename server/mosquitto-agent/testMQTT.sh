@@ -1,15 +1,17 @@
-if (( $# != 5 ))
+if (( $# != 4 ))
 then
-  echo "Usage: ${0} <nr sensors> <nr measures> <nr runs> <user> <password>"
+  echo "Usage: ${0} <nr sensors> <nr measures> <user> <password>"
   exit 1;
 fi
 
 SENSORS=${1}
 MEASURES=${2}
-RUNS=${3}
 
-MY_USER=${4}
-MY_PASSWD=${5}
+
+MY_USER=${3}
+MY_PASSWD=${4}
+
+
 MY_QOS=1
 MY_HOST=wg66.waag.org
 
@@ -22,7 +24,12 @@ do
 
   #RND_TXT=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   #MY_MSG="{\"measure\":\"${RND_TXT}\",\"id\":${ID}}"
-  MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
+  if (( $[ 1 + $[ RANDOM % 9 ]] > 6 ))
+  then
+    MY_MSG="{\"garbage\"\"}"
+  else
+    MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
+  fi
 
   #echo "Sensor nr. ${d}"
 
@@ -60,12 +67,8 @@ wait
 }
 
 function runTest {
-
-for (( run=1; run<=${RUNS}; run++ ))
-	do
-		echo "Testing ${SENSORS} Sensors each with ${MEASURES} measures, run ${run} of ${RUNS}"
-		time test
-	done
+	echo "Testing ${SENSORS} Sensors each with ${MEASURES} measures with randomly incorrect messages"
+	time test
 }
 
 clear
