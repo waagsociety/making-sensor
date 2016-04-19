@@ -5,6 +5,10 @@ require 'pg'
 require 'json'
 
 
+# Global variables
+$mqtt_client = nil
+$db_conn = nil
+$byebye = false
 
 # Release the MQTT connection
 def closeMQTTConn(client)
@@ -29,7 +33,7 @@ def makeMQTTConnection(conf, client)
   # trying anyway to release the client just in case
   closeMQTTConn(client)
 
-  is_on = FALSE
+  is_on = false
 
   while ! is_on do
     begin
@@ -44,7 +48,7 @@ def makeMQTTConnection(conf, client)
       )
       client.subscribe([conf['mqtt']['topic'],conf['mqtt']['QoS']])
 
-      is_on = TRUE
+      is_on = true
 
     rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
       $stderr.puts "Error in connecting to MQTT server: #{e.class.name}, #{e.message}, sleep and retry"
@@ -75,7 +79,7 @@ def makeDBConnection(conf, conn)
   # trying anyway to release the connection just in case
   closeDBConn(conn)
 
-  is_on = FALSE
+  is_on = false
 
   while ! is_on do
     begin
@@ -93,7 +97,7 @@ def makeDBConnection(conf, conn)
       conn.prepare("sensordata", "INSERT INTO #{conf['airqdb']['measurestable']} (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, message) " +
                   "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::text)")
 
-      is_on = TRUE
+      is_on = true
 
     rescue PGError => e
       $stderr.puts "Error in connecting to Postgres server: #{e.class.name}, #{e.message}, sleep and retry"
@@ -103,7 +107,20 @@ def makeDBConnection(conf, conn)
   return conn
 end
 
+# Close connections before exiting
+def clean_up()
+  puts "Closing MQTT and DB connections"
+  closeMQTTConn($mqtt_client)
+  closeDBConn($db_conn)
+end
 
+# Signal handler to handle a clean exit
+Signal.trap("SIGTERM") {
+  puts "Exiting"
+  $byebye = true
+  }
+
+# here the main part starts
 dir = File.dirname(File.expand_path(__FILE__))
 ms_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 puts ms_conf
@@ -113,11 +130,12 @@ mqtt_client = makeMQTTConnection(ms_conf,nil)
 db_conn = makeDBConnection(ms_conf,nil)
 
 
-while true do
+while ! $byebye do
   begin
     done = false
     while ! done
       begin
+        # blocking call, not ideal if need to exit
         topic,msg = mqtt_client.get()
         done = true
       rescue MQTT::Exception => e
@@ -167,7 +185,6 @@ while true do
 end
 
 at_exit do
-  puts "Closing MQTT and DB connections"
-  closeMQTTConn(mqtt_client)
-  closeDBConn(db_conn)
+  clean_up()
+  puts "Program exited"
 end
