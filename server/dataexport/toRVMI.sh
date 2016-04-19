@@ -24,15 +24,16 @@ NOW="$(date '+%Y_%m_%d_%H_%M_%S')"
 OUTPUTFILE="${TMP_DIR}/airq.${NOW}.csv"
 
 HEADERS="id,srv_ts,rssi,temp,pm10,pm25,no2a,no2b"
+VALID_DATA=" AND id >= 100 AND NOT (temp is NULL AND pm10 is NULL AND pm25 IS NULL AND no2a IS NULL AND no2b IS NULL) "
 DBNAME=airq
 
 echo "#${HEADERS}" > ${OUTPUTFILE}
 
-sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone;\" " >> ${OUTPUTFILE}
+sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone ${VALID_DATA} ;\" " >> ${OUTPUTFILE}
 
 if [ "$(cat ${OUTPUTFILE} | wc -l)" = "1" ]
 then
-	echo "No sensor data for the past ${HOURS} at $(date)"
+	echo "No real sensor data for the past ${HOURS} hour(s) at $(date)"
 	exit 1
 fi
 
