@@ -29,7 +29,7 @@ stopifnot(sum(is.na(all$corr_ts))== 0)
 #startDate <- as.POSIXct("14-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
 #endDate <- as.POSIXct("18-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
 
-endDate <- trunc(max(all$corr_ts), units = "days") + 60 * 60 * 24
+endDate <- trunc(Sys.time(), units = "days") + 60 * 60 * 24
 
 n <- readline(prompt="Enter time range: last n days (0 for all) ")
 
