@@ -31,8 +31,8 @@ then
   #Copy the new file over the original file
   mv config.mk.mod config.mk
 
-  make && make test && sudo make install
-  #make && sudo make install
+  #make && make test && sudo make install
+  make && sudo make install
 
   # update linker
   sudo ldconfig
@@ -43,11 +43,17 @@ fi
 
 cd
 
+if ! getent group mosquitto  >/dev/null 2>&1
+then
+  sudo addgroup mosquitto
+fi
+
 if ! id -u mosquitto >/dev/null 2>&1
 then
   # Create user mosquitto
-  sudo addgroup mosquitto
   sudo useradd -r -M -s /sbin/nologin -g mosquitto mosquitto
+else
+  sudo usermod -g mosquitto mosquitto
 fi
 
 if [ ! -d /var/log/mosquitto ]

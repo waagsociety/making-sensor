@@ -40,7 +40,53 @@ vagrantfile:
         synced_folder:
             vflsf_7fflrs4v8424:
                 source: ./
-                target: /home/vagrant/src
+                target: /home/vagrant/src/making-sensor
+                sync_type: default
+                smb:
+                    smb_host: ''
+                    smb_username: ''
+                    smb_password: ''
+                    mount_options:
+                        dir_mode: '0775'
+                        file_mode: '0664'
+                rsync:
+                    args:
+                        - '--verbose'
+                        - '--archive'
+                        - '-z'
+                    exclude:
+                        - .vagrant/
+                        - .git/
+                        - citysdk-amsterdam/
+                        - citysdk-services/
+                    auto: 'true'
+                owner: vagrant
+                group: vagrant
+            vflsf_7fflrs4v8424:
+                source: ./citysdk-services
+                target: /home/vagrant/src/citysdk-services
+                sync_type: default
+                smb:
+                    smb_host: ''
+                    smb_username: ''
+                    smb_password: ''
+                    mount_options:
+                        dir_mode: '0775'
+                        file_mode: '0664'
+                rsync:
+                    args:
+                        - '--verbose'
+                        - '--archive'
+                        - '-z'
+                    exclude:
+                        - .vagrant/
+                        - .git/
+                    auto: 'true'
+                owner: vagrant
+                group: vagrant
+            vflsf_7fflrs4v8426:
+                source: ./citysdk-amsterdam
+                target: /home/vagrant/src/citysdk-amsterdam
                 sync_type: default
                 smb:
                     smb_host: ''
@@ -87,6 +133,7 @@ server:
     install: '1'
     packages:
         - vim
+        - mosquitto
 users_groups:
     install: '1'
     groups: {  }

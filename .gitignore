@@ -5,3 +5,8 @@ airq.passenger.log
 doTest
 .Rhistory
 all.csv
+id_rsa
+id_rsa.pub
+root_id_rsa
+root_id_rsa.pub
+.RData

@@ -51,7 +51,7 @@ def makeMQTTConnection(conf, client)
       is_on = true
 
     rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
-      $stderr.puts "Error in connecting to MQTT server: #{e.class.name}, #{e.message}, sleep and retry"
+      $stderr.puts "Error in connecting to MQTT server, class: #{e.class.name}, message: #{e.message}, sleep and retry"
       sleep conf['mqtt']['retry']
     end
   end
@@ -100,7 +100,7 @@ def makeDBConnection(conf, conn)
       is_on = true
 
     rescue PGError => e
-      $stderr.puts "Error in connecting to Postgres server: #{e.class.name}, #{e.message}, sleep and retry"
+      $stderr.puts "Error in connecting to Postgres server, class: #{e.class.name}, message: #{e.message}, sleep and retry"
       sleep conf['airqdb']['retry']
     end
   end
@@ -139,7 +139,7 @@ while ! $byebye do
         topic,msg = mqtt_client.get()
         done = true
       rescue MQTT::Exception => e
-        $stderr.puts "Error with the MQTT connection: #{e.message}"
+        $stderr.puts "Error with the MQTT connection, class: #{e.class.name}, message: #{e.message}"
         $stderr.puts "Sleep and retry"
         sleep ms_conf['mqtt']['retry']
         mqtt_client = makeMQTTConnection(ms_conf,mqtt_client)
@@ -153,7 +153,7 @@ while ! $byebye do
     begin
       msg_hash = JSON.parse(msg,symbolize_names: true)
     rescue JSON::JSONError => e
-      $stderr.puts "Error processing sensor data: #{msg}, #{e.message}"
+      $stderr.puts "Error processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
       $stderr.puts "Skip message and continue"
       next
     end
@@ -169,7 +169,7 @@ while ! $byebye do
               msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], msg_hash[:message]])
         done = true
       rescue PGError => e
-        $stderr.puts "Error with the DB connection: #{e.message}"
+        $stderr.puts "Error with the DB connection, class: #{e.class.name}, message: #{e.message}"
         $stderr.puts "Sleep and retry"
         sleep ms_conf['airqdb']['retry']
         db_conn = makeDBConnection(ms_conf,db_conn)
@@ -177,7 +177,7 @@ while ! $byebye do
     end
 
   rescue Exception => e
-    $stderr.puts "Error in process loop: #{e.class.name}, #{e.message}"
+    $stderr.puts "Error in process loop, class: #{e.class.name}, message: #{e.message}"
     $stderr.puts "Sensor data: topic: #{topic}, msg: #{msg}, timestamp: #{srv_ts}, hash: #{msg_hash.to_s}"
     $stderr.puts "Sleep and continue"
     sleep ms_conf['mqtt']['retry']
