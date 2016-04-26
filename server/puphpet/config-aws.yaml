@@ -1,0 +1,29 @@
+vagrantfile:
+    target: aws
+    vm:
+        provider:
+            aws:
+                box: dummy
+                machines:
+                    vflm_oevdf16x1ev6:
+                        id: airq
+                        hostname: airq.amazon
+                        keypair_name: AirQ
+                        private_key_path: puphpet/files/dot/ssh/id_rsa
+                        ssh_username: ubuntu
+                        region: eu-central-1
+                        instance_type: t2.micro
+                        ami: ami-87564feb
+                        subnet_id: subnet-b04377d9
+                        elastic_ip: 52.58.94.88
+                        security_groups: sg-6e19f106
+                        ebs_size: 8
+                        ebs_optimized: true
+                        monitoring:
+                        associate_public_ip:
+                        package_tags:
+                        elb:
+                        terminate_on_shutdown: true
+                        tags:
+                          Name: 'airq server'
+                          Project: airq

@@ -20,14 +20,14 @@ vagrantfile:
                         update_guest_tools: 0
                 machines:
                     vflm_oevdf16x1ev6:
-                        id: citySDK
+                        id: airq
                         network:
                             private_network: 192.168.56.101
                             forwarded_port:
                                 vflmnfp_5lswxo9unmgd:
                                     host: '6852'
                                     guest: '22'
-                        hostname: citySDK.local
+                        hostname: airq.local
                         memory: '1024'
                         cpus: '1'
         provision:
@@ -104,8 +104,8 @@ firewall:
     rules:
         fr_cqfgv4r494fr:
             port:
-                - '8080'
-            priority: '100'
+                - '1883'
+            priority: '200'
             proto: tcp
             action: accept
 cron:
@@ -124,15 +124,14 @@ nginx:
     upstreams: {  }
     vhosts:
         nxv_9tnpdl0wsqpu:
-            server_name: citysdk.dev
+            server_name: sensor.waag.org
             server_aliases:
-                - www.citysdk.org
-            www_root: /var/www/citysdk
-            listen_port: '8080'
+                - sensor.local
+            www_root: /var/www/sensor
+            listen_port: '80'
             index_files:
                 - index.html
                 - index.htm
-                - index.php
             client_max_body_size: 1m
             ssl: '0'
             ssl_cert: ''
