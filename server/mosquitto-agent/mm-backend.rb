@@ -168,6 +168,10 @@ while ! $byebye do
         res = db_conn.exec_prepared("sensordata",[msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
               msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], msg_hash[:message]])
         done = true
+      rescue PG::NotNullViolation => e
+        $stderr.puts "Error inserting message: #{msg}, error: #{e.message}"
+        $stderr.puts "Ignore message"
+      end
       rescue PGError => e
         $stderr.puts "Error with the DB connection, class: #{e.class.name}, message: #{e.message}"
         $stderr.puts "Sleep and retry"
