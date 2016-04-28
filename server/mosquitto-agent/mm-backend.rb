@@ -171,7 +171,6 @@ while ! $byebye do
       rescue PG::NotNullViolation => e
         $stderr.puts "Error inserting message: #{msg}, error: #{e.message}"
         $stderr.puts "Ignore message"
-      end
       rescue PGError => e
         $stderr.puts "Error with the DB connection, class: #{e.class.name}, message: #{e.message}"
         $stderr.puts "Sleep and retry"
