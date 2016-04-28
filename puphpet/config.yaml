@@ -20,7 +20,7 @@ vagrantfile:
                         update_guest_tools: 0
                 machines:
                     vflm_oevdf16x1ev6:
-                        id: airq
+                        id: airq.local
                         network:
                             private_network: 192.168.56.101
                             forwarded_port:
@@ -57,14 +57,12 @@ vagrantfile:
                     exclude:
                         - .vagrant/
                         - .git/
-                        - citysdk-amsterdam/
-                        - citysdk-services/
                     auto: 'true'
                 owner: vagrant
                 group: vagrant
-            vflsf_7fflrs4v8424:
-                source: ./citysdk-services
-                target: /home/vagrant/src/citysdk-services
+            vflsf_7fflrs4v8425:
+                source: ../city-sdk/citysdk-services/
+                target: /home/vagrant/src/citysdk-services/
                 sync_type: default
                 smb:
                     smb_host: ''
@@ -85,8 +83,30 @@ vagrantfile:
                 owner: vagrant
                 group: vagrant
             vflsf_7fflrs4v8426:
-                source: ./citysdk-amsterdam
-                target: /home/vagrant/src/citysdk-amsterdam
+                source: ../city-sdk/citysdk-amsterdam/
+                target: /home/vagrant/src/citysdk-amsterdam/
+                sync_type: default
+                smb:
+                    smb_host: ''
+                    smb_username: ''
+                    smb_password: ''
+                    mount_options:
+                        dir_mode: '0775'
+                        file_mode: '0664'
+                rsync:
+                    args:
+                        - '--verbose'
+                        - '--archive'
+                        - '-z'
+                    exclude:
+                        - .vagrant/
+                        - .git/
+                    auto: 'true'
+                owner: vagrant
+                group: vagrant
+            vflsf_7fflrs4v8427:
+                source: ../making-sense-feedback-app/
+                target: /home/vagrant/src/making-sense-feedback-app/
                 sync_type: default
                 smb:
                     smb_host: ''
@@ -133,6 +153,7 @@ server:
     install: '1'
     packages:
         - vim
+        - git
         - mosquitto
 users_groups:
     install: '1'
@@ -170,7 +191,7 @@ nginx:
         names_hash_bucket_size: 128
     upstreams: {  }
     vhosts:
-        nxv_9tnpdl0wsqpu:
+        sensor_9tnpdl0wsqpu:
             server_name: sensor.waag.org
             server_aliases:
                 - sensor.local
@@ -189,37 +210,90 @@ nginx:
             rewrite_to_https: '1'
             spdy: '1'
             locations:
-                nxvl_233wshpaysfl:
+                sensor_233wshpaysfl:
                     location: /
-                    autoindex: 'off'
-                    internal: 'false'
+                    autoindex: false
+                    internal: false
                     try_files:
                         - $uri
                         - $uri/
-                        - /index.php$is_args$args
+#                        - /index.php$is_args$args
+                    index_files:
+                        - index.html
+                        - index.htm
                     fastcgi: ''
                     fastcgi_index: ''
                     fastcgi_split_path: ''
                     proxy: ''
                     proxy_redirect: ''
-                nxvl_albgifozdsnc:
-                    location: '~ \.php$'
-                    autoindex: 'off'
-                    internal: 'false'
+#                sensor_albgifozdsnc:
+#                    location: '~ \.php$'
+#                    autoindex: 'off'
+#                    internal: 'false'
+#                    try_files:
+#                        - $uri
+#                        - $uri/
+#                        - /index.php$is_args$args
+#                    fastcgi: '127.0.0.1:9000'
+#                    fastcgi_index: index.php
+#                    fastcgi_split_path: '^(.+\.php)(/.*)$'
+#                    fast_cgi_params_extra:
+#                        - 'SCRIPT_FILENAME $request_filename'
+#                        - 'APP_ENV dev'
+#                    set:
+#                        - '$path_info $fastcgi_path_info'
+#                    proxy: ''
+#                    proxy_redirect: ''
+        airq_9tnpdl0wsqpz:
+            server_name: airq.waag.org
+            server_aliases:
+                - airq.local
+            www_root: /var/www/airq
+            listen_port: '80'
+            index_files:
+                - index.html
+                - index.htm
+            client_max_body_size: 1m
+            ssl: '0'
+            ssl_cert: ''
+            ssl_key: ''
+            ssl_port: '443'
+            ssl_protocols: ''
+            ssl_ciphers: ''
+            rewrite_to_https: '1'
+            spdy: '1'
+            locations:
+                airq_233wshpaysfl:
+                    location: /
+                    autoindex: off
+                    internal: false
                     try_files:
                         - $uri
                         - $uri/
-                        - /index.php$is_args$args
-                    fastcgi: '127.0.0.1:9000'
-                    fastcgi_index: index.php
-                    fastcgi_split_path: '^(.+\.php)(/.*)$'
-                    fast_cgi_params_extra:
-                        - 'SCRIPT_FILENAME $request_filename'
-                        - 'APP_ENV dev'
-                    set:
-                        - '$path_info $fastcgi_path_info'
+                        - /index.html
+#                        - $uri/
+#                        - /index.php$is_args$args
+                    fastcgi: ''
+                    fastcgi_index: ''
+                    fastcgi_split_path: ''
                     proxy: ''
                     proxy_redirect: ''
+#                airq_albgifozdsnc:
+#                    location: '~ \.php$'
+#                    autoindex: 'off'
+#                    try_files:
+#                        - $uri
+#                        - $uri/
+#                        - /index.php$is_args$args
+#                    fastcgi: '127.0.0.1:9000'
+#                    fastcgi_index: index.php
+#                    fast_cgi_params_extra:
+#                        - 'SCRIPT_FILENAME $request_filename'
+#                        - 'APP_ENV dev'
+#                    set:
+#                    proxy: ''
+#                    proxy_redirect: ''
+
     proxies: {  }
 apache:
     install: '0'
@@ -346,11 +420,11 @@ ruby:
                 - faraday
                 - faraday_middleware
 python:
-    install: '1'
+    install: '0'
     packages: {  }
     versions: {  }
 nodejs:
-    install: '1'
+    install: '0'
     settings:
         version: '5'
     npm_packages: {  }

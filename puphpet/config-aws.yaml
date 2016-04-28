@@ -6,8 +6,8 @@ vagrantfile:
                 box: dummy
                 machines:
                     vflm_oevdf16x1ev6:
-                        id: airq
-                        hostname: airq.amazon
+                        id: airq.aws
+                        hostname: airq.aws
                         keypair_name: AirQ
                         private_key_path: puphpet/files/dot/ssh/id_rsa
                         ssh_username: ubuntu

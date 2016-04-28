@@ -4,6 +4,8 @@ export DEBIAN_FRONTEND=noninteractive
 
 #lsb_release -a
 
+sudo service mosquitto stop
+
 sudo apt-get install -y uuid-dev
 
 sudo apt-get install -y libc-ares-dev
@@ -71,3 +73,5 @@ fi
 sudo chown -R mosquitto:mosquitto /var/lib/mosquitto/
 
 sudo chown -R mosquitto:mosquitto /etc/mosquitto
+
+sudo service mosquitto start

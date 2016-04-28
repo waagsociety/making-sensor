@@ -10,3 +10,4 @@ id_rsa.pub
 root_id_rsa
 root_id_rsa.pub
 .RData
+.vagrant/

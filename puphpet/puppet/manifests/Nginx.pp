@@ -299,11 +299,24 @@ class puphpet_nginx (
         'fast_cgi_params_extra' => [],
       }, delete_values($location, ''))
 
+      if array_true($location_trimmed, 'index_files') {
+        $location_trimmed_index = merge($location_trimmed, {
+          'index_files' => $location_trimmed['index_files']
+        })
+      } else {
+        $location_trimmed_index = merge($location_trimmed, {
+          'index_files' => $vhost['index_files']
+        })
+
+      }
+
       # transforms user-data to expected
-      $location_custom_data = merge($location_trimmed, {
+      $location_custom_data = merge($location_trimmed_index, {
         'autoindex' => $autoindex,
         'internal'  => $internal,
       })
+
+
 
       # Takes gui ENV vars: fastcgi_param {ENV_NAME} {VALUE}
       $location_custom_cfg_append = prefix(
