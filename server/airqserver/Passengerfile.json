@@ -1,5 +1,10 @@
 {
+    "address": "127.0.0.1",
     "port": 8090,
-    "log_file": "airq.passenger.log",
-    "environment": "development"
+    "environment": "development",
+    "ssl": false,
+    "daemonize": true,
+    "user": "www-data",
+    "log_file": "/var/log/airq/airq.passenger.log",
+    "pid_file": "/var/run/airq.passenger.pid",
 }

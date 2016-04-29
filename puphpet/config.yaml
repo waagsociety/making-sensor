@@ -154,6 +154,7 @@ server:
     packages:
         - vim
         - git
+        - screen
         - mosquitto
 users_groups:
     install: '1'
@@ -224,7 +225,7 @@ nginx:
                     fastcgi: ''
                     fastcgi_index: ''
                     fastcgi_split_path: ''
-                    proxy: ''
+                    proxy: 'http://localhost:8090'
                     proxy_redirect: ''
 #                sensor_albgifozdsnc:
 #                    location: '~ \.php$'

@@ -11,3 +11,4 @@ root_id_rsa
 root_id_rsa.pub
 .RData
 .vagrant/
+passenger.8090.log
