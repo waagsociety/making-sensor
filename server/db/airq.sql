@@ -62,6 +62,7 @@ CREATE TABLE measures
   pm25 numeric,
   no2a numeric,
   no2b numeric,
+  humidity numeric,
   message text,
   CONSTRAINT id_timestamp PRIMARY KEY (id, srv_ts)
 )

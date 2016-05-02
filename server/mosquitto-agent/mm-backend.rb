@@ -99,8 +99,10 @@ def makeDBConnection(conf, conn)
       :password => conf['airqdb']['password']
     )
 
-    conn.prepare("sensordata", "INSERT INTO #{conf['airqdb']['measurestable']} (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, message) " +
-                "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::text)")
+    conn.prepare("sensordata", "INSERT INTO #{conf['airqdb']['measurestable']} " +
+      "(id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, humidity, message) " +
+      "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, " +
+      "$6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::numeric, $11::text)")
 
   rescue PGError => e
     $stderr.puts "Error in connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
@@ -163,7 +165,7 @@ while ! $byebye do
     rescue JSON::JSONError => e
       $stderr.puts "Error processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
       $stderr.puts "Save raw message with fake id"
-      msg_hash[:id] = -1
+      msg_hash[:i] = -1
       msg_hash[:message] = msg
     end
 
@@ -172,11 +174,24 @@ while ! $byebye do
     #id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
 
     begin
-      res = db_conn.exec_prepared("sensordata",[msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
-            msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], msg_hash[:message]])
+      parameters = nil
+
+      if (msg_hash[:i] != nil)
+        parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
+              msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
+      else
+        $stderr.puts "Old format detected"
+        parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
+              msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
+      end
+      res = db_conn.exec_prepared("sensordata",  parameters)
+
     rescue PG::NotNullViolation => e
       $stderr.puts "Error inserting message: #{msg}, error: #{e.message}"
-      $stderr.puts "Ignore message"
+      $stderr.puts "Save raw message with fake id"
+      msg_hash[:i] = -1
+      msg_hash[:message] = msg
+      retry
     rescue PGError => e
       $stderr.puts "Error with the DB connection, class: #{e.class.name}, message: #{e.message}"
 
