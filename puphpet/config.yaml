@@ -416,10 +416,10 @@ ruby:
                 - deep_merge
                 - activesupport
                 - vine
-                - sinatra
-                - sinatra-contrib
-                - faraday
-                - faraday_middleware
+#                - sinatra
+#                - sinatra-contrib
+#                - faraday
+#                - faraday_middleware
 python:
     install: '0'
     packages: {  }

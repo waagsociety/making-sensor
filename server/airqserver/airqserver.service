@@ -1,0 +1,45 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          airqserver
+# Required-Start:    $local_fs $network $named $time $syslog
+# Required-Stop:     $local_fs $network $named $time $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       airqserver providing endpoint for city-sdk
+### END INIT INFO
+
+BASE_DIR=
+MY_CMD=bundle
+export PATH=
+
+start(){
+  cd ${BASE_DIR}
+  ${MY_CMD} exec passenger start
+}
+stop(){
+  cd ${BASE_DIR}
+  ${MY_CMD} exec passenger stop
+}
+
+status(){
+  cd ${BASE_DIR}
+  ${MY_CMD} exec passenger status
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+esac

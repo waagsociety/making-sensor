@@ -57,8 +57,7 @@ describe 'nginx::package' do
       it { should contain_apt__source('nginx').with(
         'location'   => "http://nginx.org/packages/#{operatingsystem}",
         'repos'      => 'nginx',
-        'key'        => '7BD9BF62',
-        'key_source' => 'http://nginx.org/keys/nginx_signing.key'
+        'key => { "id" => "7BD9BF62", "source" => "http://nginx.org/keys/nginx_signing.key" }'
       )}
       it { should contain_anchor('nginx::package::begin').that_comes_before('Class[nginx::package::debian]') }
       it { should contain_anchor('nginx::package::end').that_requires('Class[nginx::package::debian]') }
@@ -71,8 +70,7 @@ describe 'nginx::package' do
       it { should contain_apt__source('nginx').with(
         'location'   => 'https://oss-binaries.phusionpassenger.com/apt/passenger',
         'repos'      => "main",
-        'key'        => '561F9B9CAC40B2F7',
-        'key_source' => 'https://oss-binaries.phusionpassenger.com/auto-software-signing-gpg-key.txt'
+        'key => { "id" => "561F9B9CAC40B2F7", "source" => "https://oss-binaries.phusionpassenger.com/auto-software-signing-gpg-key.txt" }'
       )}
     end
 

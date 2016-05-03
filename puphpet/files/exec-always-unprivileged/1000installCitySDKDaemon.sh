@@ -1,28 +1,29 @@
 #NAME_PRG=citysdk_daemon
-
-MY_BUNDLE=/usr/local/rvm/gems/ruby-2.1.5/wrappers/bundle
-ORIG_DIR=${HOME}/src/making-sensor/server/airqserver
-
 MY_SRV=airqserver
-MY_TMP=/tmp/airqserver
-MY_USER=www-data
+MY_TMP=/tmp/${MY_SRV}
 
-DEST_FILE=/usr/bin/${MY_SRV}
 
-DEST_CONF=/etc/init/${MY_SRV}.conf
+MY_BUNDLE=$(which bundle | sed  's/\(.*\)\/bin\/\(.*\)/\1\/wrappers\/\2/g')
+ORIG_DIR=$(find ${HOME} -type d -name ${MY_SRV})
+MY_USER=$(cat ${ORIG_DIR}/Passengerfile.json | /bin/grep user | cut -d'"' -f4)
+MY_CMD="${MY_BUNDLE}"
 
-LOG_DIR=/var/log/airq/
+DEST_FILE=/etc/init.d/${MY_SRV}
+
+LOG_DIR=$(dirname $(cat ${ORIG_DIR}/Passengerfile.json | /bin/grep log_file | cut -d'"' -f4))
 
 cd ${ORIG_DIR}
-export rvmsudo_secure_path=1
-rvmsudo bundle install
 
-cat <<-EOF > ${MY_TMP}
+FILT_DIR=$(echo ${ORIG_DIR} | sed 's/\//\\\//g')
+FILT_CMD=$(echo ${MY_CMD} | sed 's/\//\\\//g')
 
-  cd ${ORIG_DIR}
-  ${MY_BUNDLE} exec passenger start
+bundle install
+MY_GEMS="$(bundle env | /bin/grep GEM_PATH | sed 's/GEM_PATH \(.*\)/\1/g' | cut -f1 -d':')"
+MY_GEMS="${MY_GEMS}:${MY_GEMS}/wrappers"
+FILT_GEMS=$(echo ${MY_GEMS} | sed 's/\//\\\//g')
 
-EOF
+#cat airqserver.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^MY_CMD=$/MY_CMD=\"${FILT_CMD}\"/g" > ${MY_TMP}
+cat airqserver.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^export PATH=$/export PATH=\${PATH}:${FILT_GEMS}/g" > ${MY_TMP}
 
 sudo mv ${MY_TMP} ${DEST_FILE}
 
@@ -30,42 +31,7 @@ sudo chown root:root ${DEST_FILE}
 
 sudo chmod u+x ${DEST_FILE}
 
-cat <<-EOF > ${MY_TMP}
-  # ${MY_SRV} - ${MY_SRV} job file
-
-  description "AirQ web server for reading sensor data§"
-  author "Stefano Bocconi <stefano@waag.org>"
-
-  # Stanzas
-  #
-  # Stanzas control when and how a process is started and stopped
-  # See a list of stanzas here: http://upstart.ubuntu.com/wiki/Stanzas#respawn
-
-  # When to start the service
-  start on runlevel [2345]
-
-  # When to stop the service
-  stop on runlevel [016]
-
-  # Automatically restart process if crashed
-  respawn
-
-  # Essentially lets upstart know the process will detach itself to the background
-  expect fork
-
-  # Run before process
-  #pre-start script
-  #    [ -d /var/run/myservice ] || mkdir -p /var/run/myservice
-  #        echo "Put bash code here"
-  #        end script
-
-  # Start the process
-  exec ${DEST_FILE}
-
-EOF
-
-sudo mv ${MY_TMP} ${DEST_CONF}
-sudo chown root:root ${DEST_CONF}
+sudo update-rc.d ${MY_SRV} defaults 98 02
 
 if [ ! -d "${LOG_DIR}" ]
 then
@@ -74,7 +40,7 @@ fi
 
 sudo chown -R ${MY_USER}:${MY_USER} ${LOG_DIR}
 
-sudo service ${MY_SRV} restart
+sudo service ${MY_SRV} start
 
 #NAMEPID=$(ps -ef | /bin/grep -i "screen -S ${NAME_PRG}" | /bin/grep -v 'grep -i')
 
