@@ -176,7 +176,7 @@ while ! $byebye do
     begin
       parameters = nil
 
-      if (msg_hash[:i] != nil)
+      if (! msg_hash[:i].nil?)
         parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
               msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
       else
