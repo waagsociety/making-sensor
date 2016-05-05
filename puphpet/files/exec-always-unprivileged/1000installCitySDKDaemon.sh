@@ -23,7 +23,7 @@ MY_GEMS="${MY_GEMS}:${MY_GEMS}/wrappers"
 FILT_GEMS=$(echo ${MY_GEMS} | sed 's/\//\\\//g')
 
 #cat airqserver.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^MY_CMD=$/MY_CMD=\"${FILT_CMD}\"/g" > ${MY_TMP}
-cat airqserver.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^export PATH=$/export PATH=\${PATH}:${FILT_GEMS}/g" > ${MY_TMP}
+cat ${MY_SRV}.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^export PATH=$/export PATH=\${PATH}:${FILT_GEMS}/g" > ${MY_TMP}
 
 sudo mv ${MY_TMP} ${DEST_FILE}
 

@@ -1,0 +1,83 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          mosquitto-agent
+# Required-Start:    $local_fs $network $named $time $syslog
+# Required-Stop:     $local_fs $network $named $time $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       mosquitto agent for reading sensor data
+### END INIT INFO
+
+MY_NAME=
+BASE_DIR=
+MY_USER=
+PATH=
+LOGFILE=
+
+
+MY_CMD=ruby
+PIDFILE=/var/run/${MY_NAME}.pid
+NOECHO=noecho
+
+start() {
+  if status ${NOECHO}
+  then
+    echo 'Service already running' >&2
+    return 1
+  else
+    echo 'Starting service…' >&2
+    local CMD="export PATH=\${PATH}:${PATH} ; cd ${BASE_DIR}; ${MY_CMD} ${MY_NAME}.rb &>>\"${LOGFILE}\" & echo \$!"
+    set -x
+    su -s /bin/bash ${MY_USER} -c "${CMD}" > "${PIDFILE}"
+    echo 'Service started' >&2
+    return 0
+  fi
+}
+
+stop() {
+  if ! status ${NOECHO}
+  then
+    echo 'Service not running' >&2
+    return 1
+  else
+    echo 'Stopping service…' >&2
+    kill -s SIGTERM $(cat "$PIDFILE") && rm -f "$PIDFILE"
+    echo "Service being stopped, check log ${LOGFILE}" >&2
+    return 0
+  fi
+}
+
+status() {
+  if [ -f ${PIDFILE} ] && kill -0 $(cat ${PIDFILE})
+  then
+    if [ ! "${1} " = "${NOECHO} " ]
+    then
+       echo 'Service running' >&2
+    fi
+    return 0
+  else
+    if [ ! "${1} " = "${NOECHO} " ]
+    then
+       echo 'Service not running' >&2
+    fi
+    return 1
+  fi
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+esac

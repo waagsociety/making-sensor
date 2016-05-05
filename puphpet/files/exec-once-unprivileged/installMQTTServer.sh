@@ -6,11 +6,9 @@ export DEBIAN_FRONTEND=noninteractive
 
 sudo service mosquitto stop
 
-sudo apt-get install -y uuid-dev
-
-sudo apt-get install -y libc-ares-dev
-
-sudo apt-get install -y g++
+#sudo apt-get install -y uuid-dev
+#sudo apt-get install -y libc-ares-dev
+#sudo apt-get install -y g++
 
 cd
 

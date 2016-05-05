@@ -156,6 +156,12 @@ server:
         - git
         - screen
         - mosquitto
+        - libpq-dev
+        - ncurses-dev
+        - libicu-dev
+        - uuid-dev
+        - libc-ares-dev
+        - g++
 users_groups:
     install: '1'
     groups: {  }

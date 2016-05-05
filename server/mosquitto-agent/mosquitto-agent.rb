@@ -1,9 +1,10 @@
 require 'rubygems'
-require 'mqtt'
+require 'bundler/setup'
+
 require 'yaml'
 require 'pg'
 require 'json'
-
+require 'mqtt'
 
 # Global variables
 $mqtt_client = nil

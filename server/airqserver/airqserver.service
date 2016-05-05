@@ -19,6 +19,16 @@ start(){
 stop(){
   cd ${BASE_DIR}
   ${MY_CMD} exec passenger stop
+  PIDS="$(ps -ef | /bin/grep PassengerAgent | /bin/grep -v grep | tr -s ' ' | cut -f2 -d' ')"
+  if [ "$PIDS " = " " ]
+  then
+    return
+  fi
+  for pid in "${PIDS}"
+  do
+    kill -s SIGTERM ${pid}
+  done
+
 }
 
 status(){
