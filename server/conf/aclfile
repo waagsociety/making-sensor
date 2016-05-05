@@ -1,8 +1,8 @@
 user MSAdmin
 topic read $SYS/#
- 
-user MSSubscriber
+
+user AirQSubscriber
 topic read sensor/#
- 
-user MSPublisher
-pattern write sensor/%c/data
+
+user AirQPublisher
+pattern write sensor/+/data

@@ -12,3 +12,5 @@ root_id_rsa.pub
 .RData
 .vagrant/
 passenger.8090.log
+rvmi_key.private.key
+pwfile
