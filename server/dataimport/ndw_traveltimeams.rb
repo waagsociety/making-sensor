@@ -14,7 +14,7 @@ def httpget(host, path, user_agent='Waag agent', timeout=5, open_timeout=2)
   connection = Faraday.new(host) do |c|
     c.use FaradayMiddleware::FollowRedirects, limit: 3
     c.use Faraday::Response::RaiseError       # raise exceptions on 40x, 50x responses
-    c.use Faraday::Adapter::NetHttp
+#    c.use Faraday::Adapter::NetHttp
   end
 
   connection.headers[:user_agent] = user_agent
