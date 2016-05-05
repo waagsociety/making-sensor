@@ -1,0 +1,24 @@
+users:
+  # just place your ~/.ssh/id_*.pub key contents here
+  # if you dont have such a public key, run `ssh-keygen`
+  stefano: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxIMaALlvQooxnPj9NiDMyhMap7IX0j4Yq/LHEZc+c4sj/KQXjovM845F/H8yj9r5Ibw4YWzkKROB9fRW+ZYcR43dlbDmlf9hZO/QYtWuk3ZC5DOvqBQ2+/Ume2sU70nyhR3u+Y60cXUhpSrr5sf1yTiQweNk8VhfezjXFCpcEUhEFtBYHiVrGY4wCIsx9IZ63Pr41A+pYiqMINXgxw/cB9s4uMIyNBG8NIiaPJC3MJgpfaX3FXLKT9BefrJP3kWBh1jTMfYyDiKCgerMh/2d5YPSiWDt1R3SPh9jQ0WgckCQsbMgl8df9Um+8iEO63iI88PIw11sEAvlE/wlUN03kQ== stefano@waag"
+
+base-conf:
+    machine-image: ami-a6b0b7bb
+    subnet: subnet-1a960e73 #staging subnet
+    security-group: sg-b9ed94d0
+    vpc: vpc-6865cc01
+    region: eu-central-1
+    instance-type: t2.micro
+
+hosts:
+  airq:
+    server:
+      ip-address: 10.0.1.51
+      app-user: airqdaemon
+    storage:
+      id:
+      size: 100
+      availability-zone: eu-central-1a
+      type: gp2
+      encrypted: false
