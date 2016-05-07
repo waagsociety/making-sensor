@@ -4,7 +4,7 @@ MY_TMP=/tmp/${MY_SRV}
 
 
 MY_RUBY=$(which ruby)
-ORIG_DIR=$(find ${HOME} -type d -name ${MY_SRV})
+ORIG_DIR=$(find ${HOME}/src -type d -name ${MY_SRV})
 MY_USER=mosquitto
 MY_CMD="${MY_RUBY}"
 
@@ -18,8 +18,9 @@ cd ${ORIG_DIR}
 
 
 bundle install
-MY_GEMS="$(bundle env | /bin/grep GEM_PATH | sed 's/GEM_PATH \(.*\)/\1/g' | cut -f1 -d':')"
-MY_GEMS="${MY_GEMS}:${MY_GEMS}/wrappers"
+#MY_GEMS="$(gem env gempath)"
+#MY_GEMS="$(bundle env | /bin/grep GEM_PATH | sed 's/GEM_PATH \(.*\)/\1/g' | cut -f1 -d':')"
+MY_GEMS="$(for i in $(gem env gempath | tr ':' '\n'); do echo ${i}/wrappers;done | tr '\n' ':')"
 FILT_GEMS=$(echo ${MY_GEMS} | sed 's/\//\\\//g')
 
 FILT_DIR=$(echo ${ORIG_DIR} | sed 's/\//\\\//g')
@@ -49,4 +50,4 @@ fi
 
 sudo chown -R ${MY_USER}:${MY_USER} ${LOG_DIR}
 
-sudo service ${MY_SRV} start
+sudo service ${MY_SRV} restart

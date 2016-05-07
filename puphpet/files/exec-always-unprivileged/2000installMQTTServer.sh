@@ -41,7 +41,7 @@ else
   echo "mosquitto directory already exists"
 fi
 
-cd
+cd ${HOME}
 
 if ! getent group mosquitto  >/dev/null 2>&1
 then
@@ -69,6 +69,12 @@ then
 fi
 
 sudo chown -R mosquitto:mosquitto /var/lib/mosquitto/
+
+CONF_DIR=$(dirname $(find ${HOME}/src -type f -name mosquitto.conf))
+
+cd ${CONF_DIR}
+
+sudo cp mosquitto.conf pwfile aclfile /etc/mosquitto
 
 sudo chown -R mosquitto:mosquitto /etc/mosquitto
 

@@ -4,7 +4,7 @@ MY_TMP=/tmp/${MY_SRV}
 
 
 MY_BUNDLE=$(which bundle | sed  's/\(.*\)\/bin\/\(.*\)/\1\/wrappers\/\2/g')
-ORIG_DIR=$(find ${HOME} -type d -name ${MY_SRV})
+ORIG_DIR=$(find ${HOME}/src -type d -name ${MY_SRV})
 MY_USER=$(cat ${ORIG_DIR}/Passengerfile.json | /bin/grep user | cut -d'"' -f4)
 MY_CMD="${MY_BUNDLE}"
 
@@ -18,8 +18,9 @@ FILT_DIR=$(echo ${ORIG_DIR} | sed 's/\//\\\//g')
 FILT_CMD=$(echo ${MY_CMD} | sed 's/\//\\\//g')
 
 bundle install
-MY_GEMS="$(bundle env | /bin/grep GEM_PATH | sed 's/GEM_PATH \(.*\)/\1/g' | cut -f1 -d':')"
-MY_GEMS="${MY_GEMS}:${MY_GEMS}/wrappers"
+#MY_GEMS="$(gem env gempath)"
+#MY_GEMS="$(bundle env | /bin/grep GEM_PATH | sed 's/GEM_PATH \(.*\)/\1/g' | cut -f1 -d':')"
+MY_GEMS="$(for i in $(gem env gempath | tr ':' '\n'); do echo ${i}/wrappers;done | tr '\n' ':')"
 FILT_GEMS=$(echo ${MY_GEMS} | sed 's/\//\\\//g')
 
 #cat airqserver.service | sed "s/^BASE_DIR=$/BASE_DIR=${FILT_DIR}/g" | sed "s/^MY_CMD=$/MY_CMD=\"${FILT_CMD}\"/g" > ${MY_TMP}
@@ -40,7 +41,7 @@ fi
 
 sudo chown -R ${MY_USER}:${MY_USER} ${LOG_DIR}
 
-sudo service ${MY_SRV} start
+sudo service ${MY_SRV} restart
 
 #NAMEPID=$(ps -ef | /bin/grep -i "screen -S ${NAME_PRG}" | /bin/grep -v 'grep -i')
 

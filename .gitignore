@@ -14,3 +14,6 @@ root_id_rsa.pub
 passenger.8090.log
 rvmi_key.private.key
 pwfile
+airq_key.pub
+airqdaemon.private.key
+airq_key

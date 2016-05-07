@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 HOURS=${1}
 TMP_DIR=/tmp
@@ -39,4 +39,6 @@ then
 	exit 1
 fi
 
-sudo scp -i /home/airqdaemon/.ssh/id_rsa ${OUTPUTFILE} waag@sftp.rivm.nl:/incoming/waag
+MY_KEY="$(find $HOME/src -name rvmi_key.private.key)"
+
+sudo scp -o StrictHostKeyChecking=no -i ${MY_KEY} ${OUTPUTFILE} waag@sftp.rivm.nl:/incoming/waag

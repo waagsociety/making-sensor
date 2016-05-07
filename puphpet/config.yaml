@@ -186,6 +186,17 @@ firewall:
 cron:
     install: '1'
     jobs: {  }
+      # cj_c5k2peom7p1q:
+      #     name: test
+      #     user: vagrant
+      #     command: */4 * * * * ruby $HOME/making-sensor/server/dataimport/ndw_traveltimeams.rb
+      #     environment:
+      #         - ENV_VAR=34
+      #     minute: '1'
+      #     hour: '2'
+      #     weekday: '3'
+      #     month: '4'
+      #     monthday: ''
 nginx:
     install: '1'
     settings:

@@ -27,7 +27,7 @@ start() {
   else
     echo 'Starting service…' >&2
     local CMD="export PATH=\${PATH}:${PATH} ; cd ${BASE_DIR}; ${MY_CMD} ${MY_NAME}.rb &>>\"${LOGFILE}\" & echo \$!"
-    set -x
+    #set -x
     su -s /bin/bash ${MY_USER} -c "${CMD}" > "${PIDFILE}"
     echo 'Service started' >&2
     return 0
