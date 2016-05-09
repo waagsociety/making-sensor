@@ -32,7 +32,7 @@ class AirqApp < Sinatra::Base
     if res.cmd_tuples() > 0
       msgs = []
       res.each {|tuple|
-        #id,tmstp,rssi,temp,pm10,pm25,no2a,no2b,lat,lon
+        #id,tmstp,rssi,temp,pm10,pm25,no2a,no2b,humidity,lat,lon
         msg = {
           :id => tuple["id"],
           :srv_ts => tuple["srv_ts"],
@@ -41,7 +41,8 @@ class AirqApp < Sinatra::Base
           :pm10 => tuple["pm10"],
           :pm25 => tuple["pm25"],
           :no2a => tuple["no2a"],
-          :no2b => tuple["no2b"]
+          :no2b => tuple["no2b"],
+          :humidity => tuple["humidity"]
         }
         puts "hash " + msg.to_s
 #        content_type :json
