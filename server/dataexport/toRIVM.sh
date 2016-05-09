@@ -23,6 +23,9 @@ MY_TIME=$(eval "${FROM_TIME}")
 NOW="$(date '+%Y_%m_%d_%H_%M_%S')"
 OUTPUTFILE="${TMP_DIR}/airq.${NOW}.csv"
 
+# remove old data files
+rm ${TMP_DIR}/airq.*.csv
+
 HEADERS="id,srv_ts,rssi,temp,pm10,pm25,no2a,no2b,humidity"
 #VALID_DATA=" AND id >= 100 AND NOT (temp is NULL AND pm10 is NULL AND pm25 IS NULL AND no2a IS NULL AND no2b IS NULL) "
 VALID_DATA=" AND id >= 100 "
@@ -31,7 +34,7 @@ DBNAME=airq
 
 echo "#${HEADERS}" > ${OUTPUTFILE}
 
-sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone ${VALID_DATA} ;\" " >> ${OUTPUTFILE}
+sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone ${VALID_DATA} ;\" " > ${OUTPUTFILE}
 
 if [ "$(cat ${OUTPUTFILE} | wc -l)" = "1" ]
 then
@@ -39,6 +42,6 @@ then
 	exit 1
 fi
 
-MY_KEY="$(find $HOME/src -name rvmi_key.private.key)"
+MY_KEY="$(find $HOME -name rvmi_key.private.key)"
 
 sudo scp -o StrictHostKeyChecking=no -i ${MY_KEY} ${OUTPUTFILE} waag@sftp.rivm.nl:/incoming/waag
