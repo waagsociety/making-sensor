@@ -1,3 +1,6 @@
+require 'rubygems'
+#require 'bundler/setup'
+
 require 'faraday'
 require 'faraday_middleware'
 require 'json'
@@ -14,7 +17,7 @@ def httpget(host, path, user_agent='Waag agent', timeout=5, open_timeout=2)
   connection = Faraday.new(host) do |c|
     c.use FaradayMiddleware::FollowRedirects, limit: 3
     c.use Faraday::Response::RaiseError       # raise exceptions on 40x, 50x responses
-#    c.use Faraday::Adapter::NetHttp
+    c.use Faraday::Adapter::NetHttp
   end
 
   connection.headers[:user_agent] = user_agent
@@ -76,12 +79,13 @@ def insert_data(conn,data)
   res = conn.exec_prepared("trafficdata",[data['Id'], data['Name'], data['Type'], data['Timestamp'], data['Length'], data['Traveltime'], data['Velocity'],data['coordinates']])
 end
 
+$stdout.sync = true
 
 conn = nil
 dir = File.dirname(File.expand_path(__FILE__))
 tt_conf = YAML.load_file("#{dir}/../conf/makingsense.yaml")
 
-response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'], tt_conf['trafficdata']['user_agent'])
+  response = httpget(tt_conf['trafficdata']['host'], tt_conf['trafficdata']['path'], tt_conf['trafficdata']['user_agent'])
 
 
 if (response.is_a?(Faraday::Response) && response.status == 200)
