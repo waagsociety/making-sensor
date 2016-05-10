@@ -30,8 +30,31 @@ then
   export AWS_ACCESS_KEY_ID=$(cat ~/.aws/credentials | grep -i AWS_ACCESS_KEY_ID | tr -d ' ' | cut -d'=' -f2) && echo AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID!!
   export AWS_SECRET_ACCESS_KEY=$(cat ~/.aws/credentials | grep -i AWS_SECRET_ACCESS_KEY | tr -d ' ' | cut -d'=' -f2) && echo AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY!!
 else
-  echo "Resetting Vagrant"
+  echo "Resetting Vagrant to local environment and preparing repositories"
   unset VAGRANT_DEFAULT_PROVIDER
   unset AWS_ACCESS_KEY_ID
   unset AWS_SECRET_ACCESS_KEY
+
+	if [ ! -d ../city-sdk/citysdk-amsterdam/ ]
+	then
+		mkdir -P ../city-sdk/citysdk-amsterdam
+		cd ../city-sdk
+		git clone https://github.com/waagsociety/citysdk-amsterdam.git citysdk-amsterdam
+		cd -
+	fi
+
+	if [ ! -d ../city-sdk/citysdk-services/ ]
+	then
+		mkdir -P ../city-sdk/citysdk-services
+		cd ../city-sdk
+		git clone https://github.com/waagsociety/citysdk-services.git citysdk-services
+		cd -
+	fi
+
+	if [ ! -d ../making-sense-feedback-app/ ]
+	then
+		cd ../
+		git clone https://github.com/waagsociety/making-sense-feedback-app.git making-sense-feedback-app
+		cd -
+	fi
 fi
