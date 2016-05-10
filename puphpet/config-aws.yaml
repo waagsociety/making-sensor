@@ -15,7 +15,7 @@ vagrantfile:
                         instance_type: t2.micro
                         ami: ami-87564feb
                         subnet_id: subnet-b04377d9
-#                        elastic_ip: 52.58.94.88
+                        elastic_ip: 52.58.166.63
                         security_groups: sg-6e19f106
                         ebs_size: 8
                         ebs_optimized: false
@@ -27,3 +27,7 @@ vagrantfile:
                         tags:
                           Name: 'airq server'
                           Project: airq
+                synced_folder:
+                    vflm_oevdf16x1rdc:
+                        source: ./server/conf
+                        target: /aws-conf

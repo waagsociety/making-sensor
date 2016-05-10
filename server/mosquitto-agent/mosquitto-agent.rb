@@ -11,6 +11,8 @@ $mqtt_client = nil
 $db_conn = nil
 $byebye = false
 
+$stdout.sync = true
+
 # Signal handler to handle a clean exit
 Signal.trap("SIGTERM") {
   puts "Exiting"

@@ -10,6 +10,7 @@ class puphpet_ruby (
 
   class { '::rvm':
     key_server => 'hkp://pgp.mit.edu:80',
+#    key_server => 'hkp://keys.gnupg.net',
   }
 
   if ! defined(Group['rvm']) {

@@ -51,12 +51,12 @@ machines.each do |i, machine|
       end
     end
 
-#    data['vm']['synced_folder'].each do |i, folder|
-#      if folder['source'] != '' && folder['target'] != ''
-#        machine_id.vm.synced_folder "#{folder['source']}", "#{folder['target']}",
-#          id: "#{i}"
-#      end
-#    end
+    provider['synced_folder'].each do |i, folder|
+      if folder['source'] != '' && folder['target'] != ''
+        machine_id.vm.synced_folder "#{folder['source']}", "#{folder['target']}",
+          id: "#{i}"
+      end
+    end
 
     machine_id.vm.provision 'shell' do |s|
       s.path = 'puphpet/shell/initial-setup.sh'

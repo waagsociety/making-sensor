@@ -1,6 +1,12 @@
-if (( $# != 4 ))
+if (( $# != 5 ))
 then
-  echo "Usage: ${0} <nr sensors> <nr measures> <user> <password>"
+  echo "Usage: ${0} <nr sensors> <nr measures> <user> <password> <host>"
+  exit 1;
+fi
+
+if ! which mosquitto_pub >/dev/null
+then
+  echo "mosquitto_pub is not installed, exiting"
   exit 1;
 fi
 
@@ -11,9 +17,10 @@ MEASURES=${2}
 MY_USER=${3}
 MY_PASSWD=${4}
 
+MY_HOST=${5}
 
 MY_QOS=1
-MY_HOST=wg66.waag.org
+
 
 function publish {
 MSR=${1}
@@ -28,7 +35,9 @@ do
   then
     MY_MSG="{\"garbage\"\"}"
   else
-    MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
+#    MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
+    MY_MSG="{\"i\":26296,\"r\":-76,\"t\":\"26.30\",\"a\":\"1197\",\"b\":\"1197\",\"p10\":\"128.68\",\"p2.5\":\"432.25\",\"h\":\"44.10\"}"
+
   fi
 
   #echo "Sensor nr. ${d}"
@@ -43,6 +52,7 @@ do
 	if [ "${RESULT} " != "  " ]
 	then
 		echo "ERROR: ${RESULT}, retrying"
+    sleep 5s
 	else
 		break
 		#echo "DONE"

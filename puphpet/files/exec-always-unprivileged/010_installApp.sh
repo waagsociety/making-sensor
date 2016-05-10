@@ -19,12 +19,14 @@ if [ ! -d "${REP}" ]
 then
   git clone https://github.com/waagsociety/${REP}.git
 else
-  echo "Repository already exists, pulling"
-  cd ${REP}
-  git checkout stable
-  git pull
-  cd ..
+  echo "Repository already exists"
 fi
+
+cd ${REP}
+git checkout stable
+git pull
+cd ..
+
 
 sudo rm -rf /var/www/airq
 

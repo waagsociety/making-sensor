@@ -3,7 +3,7 @@ MY_SRV=toRIVM
 MY_TMP=/tmp/${MY_SRV}
 
 ORIG_DIR=$(dirname $(find ${HOME}/src -type f -name ${MY_SRV}.sh))
-MY_USER=vagrant
+MY_USER=$(echo $HOME | sed 's/\/home\/\(.*\)/\1/g')
 
 #DEST_FILE=/etc/init.d/${MY_SRV}
 

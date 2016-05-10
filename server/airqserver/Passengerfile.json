@@ -1,7 +1,7 @@
 {
     "address": "127.0.0.1",
     "port": 8090,
-    "environment": "development",
+    "environment": "production",
     "ssl": false,
     "daemonize": true,
     "user": "www-data",
