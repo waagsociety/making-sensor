@@ -1,6 +1,6 @@
-if (( $# != 5 ))
+if (( $# != 3 ))
 then
-  echo "Usage: ${0} <nr sensors> <nr measures> <user> <password> <host>"
+  echo "Usage: ${0} <nr sensors> <nr measures> <host>"
   exit 1;
 fi
 
@@ -10,16 +10,39 @@ then
   exit 1;
 fi
 
+parse_yaml() {
+  FILE=${1}
+  CONTEXT=${2}
+  FIELD=${3}
+
+  #echo "FILE=${FILE}, CONTEXT=${CONTEXT}, FIELD=${FIELD}"
+
+   awk  "
+   BEGIN {i=0}
+   /${CONTEXT}:/ {i=1;next}
+   i && /${FIELD}:/ {print \$2;i=0}
+   " ${FILE}
+
+}
+
+## find conf dir
+
+CONF_FILE=$(find ../ -name makingsense.yaml)
+#echo ${CONF_FILE}
+
+## Test mosquitto agent
+MY_USER=$(parse_yaml ${CONF_FILE} mqtt username)
+MY_PASSWD=$(parse_yaml ${CONF_FILE} mqtt password)
+
+#echo ${MY_USR} ${MY_PWD}
+
+
 SENSORS=${1}
 MEASURES=${2}
 
+MY_HOST=${3}
 
-MY_USER=${3}
-MY_PASSWD=${4}
-
-MY_HOST=${5}
-
-MY_QOS=1
+MY_QOS=0
 
 
 function publish {
