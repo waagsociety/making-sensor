@@ -162,6 +162,7 @@ server:
         - uuid-dev
         - libc-ares-dev
         - g++
+        - mailutils
 users_groups:
     install: '1'
     groups: {  }
