@@ -55,7 +55,7 @@ def makeMQTTConnection(conf, client)
     client.subscribe([conf['mqtt']['topic'],conf['mqtt']['QoS']])
 
   rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
-    $stderr.puts "Error in connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "CRITICAL: Error in connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
@@ -108,7 +108,7 @@ def makeDBConnection(conf, conn)
       "$6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::numeric, $11::text)")
 
   rescue PGError => e
-    $stderr.puts "Error in connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "CRITICAL: Error in connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
@@ -146,7 +146,7 @@ while ! $byebye do
       # blocking call, not ideal if need to exit
       topic,msg = mqtt_client.get()
     rescue MQTT::Exception => e
-      $stderr.puts "Error with the MQTT connection, class: #{e.class.name}, message: #{e.message}"
+      $stderr.puts "CRITICAL: Error with the MQTT connection, class: #{e.class.name}, message: #{e.message}"
 
       if $byebye
         break
@@ -176,48 +176,41 @@ while ! $byebye do
 
     #id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
 
+    parameters = nil
+
+    if (! msg_hash[:i].nil?)
+      parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
+            msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
+    else
+      $stderr.puts "WARNING: Old format detected, translate to new format and save msg"
+      parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
+            msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
+    end
+
     begin
-      parameters = nil
-
-      if (! msg_hash[:i].nil?)
-        parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
-              msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
-      else
-        $stderr.puts "Old format detected"
-        parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
-              msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
-      end
       res = db_conn.exec_prepared("sensordata",  parameters)
-
     rescue PG::NotNullViolation => e
       $stderr.puts "Error inserting message: #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:i] = -1
       msg_hash[:message] = msg
       retry
+    rescue PG::CharacterNotInRepertoire => e
+      $stderr.puts "Wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
+      $stderr.puts "Ignore msg"
     rescue PGError => e
-      $stderr.puts "Error with the DB connection, class: #{e.class.name}, message: #{e.message}"
-
-      if $byebye
-        break
-      end
-
-      $stderr.puts "Sleep and retry"
-      sleep ms_conf['airqdb']['retry']
-      db_conn = makeDBConnection(ms_conf,db_conn)
-      retry
-
+      $stderr.puts "ERROR: Error while inserting into DB, class: #{e.class.name}, message: #{e.message}"
+      $stderr.puts "Ignore msg"
     end
 
 
   rescue Exception => e
-    $stderr.puts "Error in process loop, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
     $stderr.puts "Sensor data: topic: #{topic}, msg: #{msg}, timestamp: #{srv_ts}, hash: #{msg_hash.to_s}"
 
     if $byebye
       break
     end
-
     $stderr.puts "Sleep and continue"
     sleep ms_conf['mqtt']['retry']
   end
