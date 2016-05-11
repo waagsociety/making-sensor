@@ -2,6 +2,8 @@ MY_DIR="$HOME/src"
 
 REP="making-sense-feedback-app"
 
+DEST_DIR=/var/www/airq
+
 echo "Checking out ${REP} in ${MY_DIR}"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -28,13 +30,16 @@ git pull
 cd ..
 
 
-sudo rm -rf /var/www/airq
+echo "Remove ${DEST_DIR}"
+sudo rm -rf ${DEST_DIR}
 
-sudo mkdir /var/www/airq
+echo "Make ${DEST_DIR}"
+sudo mkdir ${DEST_DIR}
 
 #echo ${PWD}
 
-sudo cp -R ${REP}/* /var/www/airq/
+echo "Copy files from ${REP} to ${DEST_DIR}"
+sudo cp -R ${REP}/* ${DEST_DIR}
 
 sudo chown -R www-data:www-data /var/www/airq
 
