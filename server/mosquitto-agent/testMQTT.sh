@@ -1,6 +1,6 @@
-if (( $# != 3 ))
+if (( $# != 5 ))
 then
-  echo "Usage: ${0} <nr sensors> <nr measures> <host>"
+  echo "Usage: ${0} <nr sensors> <nr measures> <host> <user> <password>"
   exit 1;
 fi
 
@@ -10,40 +10,16 @@ then
   exit 1;
 fi
 
-parse_yaml() {
-  FILE=${1}
-  CONTEXT=${2}
-  FIELD=${3}
-
-  #echo "FILE=${FILE}, CONTEXT=${CONTEXT}, FIELD=${FIELD}"
-
-   awk  "
-   BEGIN {i=0}
-   /${CONTEXT}:/ {i=1;next}
-   i && /${FIELD}:/ {print \$2;i=0}
-   " ${FILE}
-
-}
-
-## find conf dir
-
-CONF_FILE=$(find ../ -name makingsense.yaml)
-#echo ${CONF_FILE}
-
-## Test mosquitto agent
-MY_USER=$(parse_yaml ${CONF_FILE} mqtt username)
-MY_PASSWD=$(parse_yaml ${CONF_FILE} mqtt password)
-
-#echo ${MY_USR} ${MY_PWD}
-
 
 SENSORS=${1}
 MEASURES=${2}
 
 MY_HOST=${3}
 
-MY_QOS=0
+MY_USER=${4}
+MY_PASSWD=${5}
 
+MY_QOS=0
 
 function publish {
 MSR=${1}
@@ -60,7 +36,6 @@ do
   else
 #    MY_MSG="{\"id\":${ID},\"rssi\":-63,\"temp\":\"21.06\",\"pm10\":\"213.0\",\"pm2.5\":\"88.0\",\"no2a\":\"1054.0\",\"no2b\":\"1103.0\"}"
     MY_MSG="{\"i\":26296,\"r\":-76,\"t\":\"26.30\",\"a\":\"1197\",\"b\":\"1197\",\"p10\":\"128.68\",\"p2.5\":\"432.25\",\"h\":\"44.10\"}"
-
   fi
 
   #echo "Sensor nr. ${d}"
