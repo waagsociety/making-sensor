@@ -39,7 +39,10 @@ sudo mkdir ${DEST_DIR}
 #echo ${PWD}
 
 echo "Copy files from ${REP} to ${DEST_DIR}"
-sudo cp -R ${REP}/* ${DEST_DIR}
+#sudo cp -R ${REP}/* ${DEST_DIR}
+cd ${REP}
+sudo git checkout-index -a -f --prefix=${DEST_DIR}/
+cd ..
 
 sudo chown -R www-data:www-data /var/www/airq
 

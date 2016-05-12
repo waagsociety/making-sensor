@@ -36,6 +36,11 @@ status(){
   ${MY_CMD} exec passenger status
 }
 
+reload(){
+  cd ${BASE_DIR}
+  ${MY_CMD} exec passenger-config reopen-logs
+}
+
 case "$1" in
   start)
     start
@@ -50,6 +55,9 @@ case "$1" in
     stop
     start
     ;;
+  reload)
+    reload
+    ;;
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|restart|reload|status}"
 esac

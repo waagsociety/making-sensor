@@ -1,0 +1,12 @@
+LOG_FILE {
+    rotate 14
+    daily
+    compress
+    copytruncate
+    missingok
+    notifempty
+    size 1M
+    postrotate
+      /etc/init.d/SERVICE reload
+    endscript
+}

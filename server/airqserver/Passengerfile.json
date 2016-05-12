@@ -5,6 +5,6 @@
     "ssl": false,
     "daemonize": true,
     "user": "www-data",
-    "log_file": "/var/log/airq/airq.passenger.log",
-    "pid_file": "/var/run/airq.passenger.pid",
+    "log_file": "/var/log/airqserver/airqserver.log",
+    "pid_file": "/var/run/airqserver.passenger.pid",
 }

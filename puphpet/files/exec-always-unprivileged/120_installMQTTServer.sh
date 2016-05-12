@@ -78,4 +78,26 @@ sudo cp mosquitto.conf pwfile aclfile /etc/mosquitto
 
 sudo chown -R mosquitto:mosquitto /etc/mosquitto
 
+TMP_FILE=/tmp/mosquitto
+
+cat > ${TMP_FILE} <<End-of-message
+/var/log/mosquitto/*.log {
+  rotate 14
+	daily
+	compress
+	size 1
+	copytruncate
+	missingok
+}
+End-of-message
+#	postrotate
+#		/usr/bin/killall -HUP mosquitto
+#	endscript
+
+sudo mv ${TMP_FILE} /etc/logrotate.d/mosquitto
+
+sudo chown -R root:root /etc/logrotate.d/mosquitto
+
+sudo chmod 644 /etc/logrotate.d/mosquitto
+
 sudo service mosquitto start

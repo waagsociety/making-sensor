@@ -27,6 +27,16 @@ fi
 
 sudo chown -R ${MY_USER}:${MY_USER} ${LOG_DIR}
 
+FILT_LOGFILE=$(echo ${LOG_FILE} | sed 's/\//\\\//g')
+
+cat ${MY_SRV}.logrotate | sed "s/^LOG_FILE {/${FILT_LOGFILE} {/g" > ${MY_TMP}
+
+sudo mv ${MY_TMP} /etc/logrotate.d/${MY_SRV}
+
+sudo chown root:root /etc/logrotate.d/${MY_SRV}
+
+sudo chmod 644 /etc/logrotate.d/${MY_SRV}
+
 MY_CMD="export GEM_PATH=${MY_GEMS}; cd ${ORIG_DIR}; ${MY_RUBY} ${MY_SRV}.rb &>> ${LOG_FILE}"
 MY_JOB="*/4 * * * * ${MY_CMD}"
 cat <(fgrep -i -v "${MY_SRV}" <(crontab -l)) <(echo "${MY_JOB}") | crontab -
