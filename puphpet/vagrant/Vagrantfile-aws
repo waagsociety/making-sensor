@@ -52,6 +52,9 @@ machines.each do |i, machine|
     end
 
     provider['synced_folder'].each do |i, folder|
+      machine_id.vm.synced_folder ".", "/vagrant", disabled: true
+      machine_id.vm.synced_folder "./puphpet", "/vagrant/puphpet",owner: "ubuntu", group: "ubuntu"
+
       if folder['source'] != '' && folder['target'] != ''
         machine_id.vm.synced_folder "#{folder['source']}", "#{folder['target']}",
           id: "#{i}"
