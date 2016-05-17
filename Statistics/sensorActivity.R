@@ -1,5 +1,6 @@
 library(ggplot2)
 library(reshape2)
+library(data.table)
 
 writeLines("Starting program")
 
@@ -29,17 +30,26 @@ stopifnot(sum(is.na(all$corr_ts))== 0)
 #startDate <- as.POSIXct("14-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
 #endDate <- as.POSIXct("18-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
 
-endDate <- trunc(Sys.time(), units = "days") + 60 * 60 * 24
+startDate <- trunc(min(all$corr_ts), units = "days")
+endDate <- trunc(max(all$corr_ts), units = "days") + 60 * 60 * 24
 
-n <- readline(prompt="Enter time range: last n days (0 for all) ")
+n <- readline(prompt="Enter first day (ex:18-04-2016, \"\" for earliest available day) ")
 
-n <- as.integer(n)
+if (n == ""){
 
-if ( n == 0){
-  startDate <- trunc(min(all$corr_ts), units = "days")  
 }else{
-  startDate <- endDate - n * 60 * 60 * 24
+  startDate <- as.POSIXct(n,format = "%d-%m-%Y", tz = "Europe/Amsterdam")
 }
+
+n <- readline(prompt="Enter last day (ex:18-04-2016, \"\" for most recent available day) ")
+
+if (n == ""){
+  
+}else{
+  endDate <- as.POSIXct(n,format = "%d-%m-%Y", tz = "Europe/Amsterdam") + 60 * 60 * 24 - 1
+}
+
+stopifnot( endDate >= startDate)
 
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
 
@@ -95,8 +105,34 @@ pl <- ggplot(bins, aes(x=tm,y=data, fill=factor(type)) ) + geom_bar(position="do
 #  scale_fill_discrete(name="Restart") +
 #  scale_color_discrete("Restart") +
   xlab("Time") +
-  ylab(paste("Nr of sensor msg at",format(Sys.time(), "%a %b %d %X %Y"),sep=" ")) +
+  ylab(sprintf("Nr of sensor msg from %s to %s", startDate,endDate)) +
   theme(axis.text.x = element_text(angle = -90, hjust = 1))
 
 print(pl)
 
+measures <- c("rssi","temp","humidity","pm25", "pm10","no2a","no2b")
+
+sensorData <- data.table(all[c("id","corr_ts",measures)],key="id")
+
+sensorData <- sensorData[corr_ts>=startDate & corr_ts<=endDate,]
+
+sensorData$id <-as.factor(sensorData$id)
+
+
+writeLines("Available sensor ids: ")
+print(sensorData[,id,by = id]$id)
+
+#n <- readline(prompt="Enter sensor number: ")
+#n <- as.integer(n)
+
+
+for (i in 1:length(measures))
+{
+  readline(prompt=paste("Press enter to see ",measures[i],sep=""))
+  
+  pl <- ggplot(data=sensorData, aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
+    geom_line() 
+
+  print(pl)
+  
+}
