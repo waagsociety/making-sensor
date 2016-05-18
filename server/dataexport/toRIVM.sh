@@ -27,8 +27,8 @@ OUTPUTFILE="${TMP_DIR}/airq.${NOW}.csv"
 rm -f ${TMP_DIR}/airq.*.csv &>/dev/null
 
 HEADERS="id,srv_ts,rssi,temp,pm10,pm25,no2a,no2b,humidity"
-#VALID_DATA=" AND id >= 100 AND NOT (temp is NULL AND pm10 is NULL AND pm25 IS NULL AND no2a IS NULL AND no2b IS NULL) "
-VALID_DATA=" AND id >= 100 "
+VALID_DATA=" AND id >= 100 AND NOT (temp is NULL AND pm10 is NULL AND pm25 IS NULL AND no2a IS NULL AND no2b IS NULL AND humidity IS NULL) "
+#VALID_DATA=" AND id >= 100 "
 
 DBNAME=airq
 
