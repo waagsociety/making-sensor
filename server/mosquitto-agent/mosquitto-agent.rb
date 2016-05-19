@@ -55,7 +55,7 @@ def makeMQTTConnection(conf, client)
     client.subscribe([conf['mqtt']['topic'],conf['mqtt']['QoS']])
 
   rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
-    $stderr.puts "CRITICAL: Error in connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "CRITICAL: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
@@ -108,7 +108,7 @@ def makeDBConnection(conf, conn)
       "$6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::numeric, $11::text)")
 
   rescue PGError => e
-    $stderr.puts "CRITICAL: Error in connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "CRITICAL: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
@@ -146,8 +146,7 @@ while ! $byebye do
       # blocking call, not ideal if need to exit
       topic,msg = mqtt_client.get()
     rescue MQTT::Exception => e
-      $stderr.puts "CRITICAL: Error with the MQTT connection, class: #{e.class.name}, message: #{e.message}"
-
+      $stderr.puts "CRITICAL: while getting MQTT connection, class: #{e.class.name}, message: #{e.message}"
       if $byebye
         break
       end
@@ -166,7 +165,7 @@ while ! $byebye do
     begin
       msg_hash = JSON.parse(msg,symbolize_names: true)
     rescue JSON::JSONError => e
-      $stderr.puts "Error processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
+      $stderr.puts "ERROR: while processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:i] = -1
       msg_hash[:message] = msg
@@ -190,16 +189,26 @@ while ! $byebye do
     begin
       res = db_conn.exec_prepared("sensordata",  parameters)
     rescue PG::NotNullViolation => e
-      $stderr.puts "Error inserting message: #{msg}, error: #{e.message}"
+      $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:i] = -1
       msg_hash[:message] = msg
+      $stderr.puts "Sleep and retry"
+      sleep conf['airqdb']['retry']
+      retry
+    rescue PG::InvalidTextRepresentation => e
+      $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
+      $stderr.puts "Save raw message with fake id"
+      msg_hash[:i] = -1
+      msg_hash[:message] = msg
+      $stderr.puts "Sleep and retry"
+      sleep conf['airqdb']['retry']
       retry
     rescue PG::CharacterNotInRepertoire => e
-      $stderr.puts "Wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
+      $stderr.puts "ERROR: wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
       $stderr.puts "Ignore msg"
     rescue PGError => e
-      $stderr.puts "ERROR: Error while inserting into DB, class: #{e.class.name}, message: #{e.message}"
+      $stderr.puts "ERROR: while inserting into DB, class: #{e.class.name}, message: #{e.message}, payload: #{msg}"
       $stderr.puts "Ignore msg"
     end
 
