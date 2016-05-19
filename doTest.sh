@@ -1,11 +1,50 @@
 #!/bin/bash
 
-MY_HOST=52.58.166.63
-MY_USER=ubuntu
-SSH_PORT=22
+##########################
+# General parameters
+##########################
+
 THRESHOLD=15
-EMAIL_ADDRESS=stefano@waag.org
 TMP_FILE=/tmp/airq
+EMAIL_ADDRESS=stefano@waag.org
+
+
+if [ ! "$#" = 1 ]
+then
+  echo "Usage: specify aws or waag" | tee ${TMP_FILE}
+  mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+  exit 1
+fi
+
+
+##########################
+# Host specific parameters
+##########################
+
+if [ "${1}" = "aws" ]
+then
+  MY_HOST=52.58.166.63
+  SENSORPORT=80
+  MY_USER=ubuntu
+  SSH_PORT=22
+  APP_SERVER=airq.waag.org
+  MQTT_AGENT_LOG='/var/log/mosquitto-agent/mosquitto-agent.log'
+elif [ "${1}" = "waag" ]
+then
+#  set -x
+  MY_HOST=sensor.waag.org
+  SENSORPORT=8090
+  MY_USER=stefano
+  SSH_PORT=2234
+  APP_SERVER=sensor.waag.org:3000
+  MQTT_AGENT_LOG='/home/stefano/making-sensor/screenlog.0'
+else
+  echo "Unknown server: ${1}" | tee ${TMP_FILE}
+  mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+  exit 1
+fi
+
+
 
 
 parse_yaml() {
@@ -30,7 +69,6 @@ diff_min(){
   ELAPSED_MIN=$(date -r $(($(date "+%s") - ${DATA_S_TIME})) "+%-M")
 }
 
-## find conf dir
 if [ ! -z ${TERM} ]
 then
   clear
@@ -93,46 +131,58 @@ else
   ## Test traffic data
 
   MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
-  echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
-  diff_min "${MY_TIME}"
-  echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-
-  if (( ${ELAPSED_MIN} > ${THRESHOLD} ))
+  if [ ! -z "${MY_TIME}" ]
   then
+    echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
+    diff_min "${MY_TIME}"
+    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    if (( ${ELAPSED_MIN} > ${THRESHOLD} ))
+    then
+      PASSED=false
+    fi
+  else
+    echo "ssh command for traffic data failed" | tee -a ${TMP_FILE}
     PASSED=false
   fi
+
   ## Test measures
 
   MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d airq -c \"SELECT max(srv_ts) from measures\" " ' 2>/dev/null)
-  echo "Most recent sensor data: ${MY_TIME}" | tee -a ${TMP_FILE}
-  MY_TIME=$(echo ${MY_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
-  diff_min "${MY_TIME}"
-  echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-
-  if ((${ELAPSED_MIN} > ${THRESHOLD} ))
+  if [ ! -z "${MY_TIME}" ]
   then
+    echo "Most recent sensor data: ${MY_TIME}" | tee -a ${TMP_FILE}
+    MY_TIME=$(echo ${MY_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
+    diff_min "${MY_TIME}"
+    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    if ((${ELAPSED_MIN} > ${THRESHOLD} ))
+    then
+      PASSED=false
+    fi
+  else
+    echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
   fi
 
-  ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'grep -E "ERROR|CRITICAL" /var/log/mosquitto-agent/mosquitto-agent.log ' 2>/dev/null > /tmp/newErrorsAirQ
+
+  ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} "grep -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsAirQ
   if [ -f /tmp/oldErrorsAirQ ]
   then
     ERRORS="$(diff /tmp/newErrorsAirQ /tmp/oldErrorsAirQ)"
   else
     ERRORS="$(cat /tmp/newErrorsAirQ)"
   fi
-  
+
   mv /tmp/newErrorsAirQ /tmp/oldErrorsAirQ
 
   if [ ! -z "${ERRORS}" ]
   then
-    echo "Errors in /var/log/mosquitto-agent/mosquitto-agent.log: ${ERRORS}" | tee -a ${TMP_FILE}
+    echo "Errors in ${MQTT_AGENT_LOG}: ${ERRORS}" | tee -a ${TMP_FILE}
     PASSED=false
   else
-    echo "No errors in /var/log/mosquitto-agent/mosquitto-agent.log" | tee -a ${TMP_FILE}
+    echo "No errors in ${MQTT_AGENT_LOG}" | tee -a ${TMP_FILE}
   fi
 
-  LASTSENSORDATA="$(curl sensor.waag.org/lastsensordata 2>/dev/null)"
+  LASTSENSORDATA="$(curl sensor.waag.org:${SENSORPORT}/lastsensordata 2>/dev/null)"
   if [ -z "${LASTSENSORDATA}" ]
   then
     echo "No last sensor data (curl sensor.waag.org/lastsensordata)" | tee -a ${TMP_FILE}
@@ -141,12 +191,12 @@ else
     echo "Last sensor data (curl sensor.waag.org/lastsensordata): ${LASTSENSORDATA}" | tee -a ${TMP_FILE}
   fi
 
-  if ! curl airq.waag.org 2>&1 | grep bundle.js >/dev/null
+  if ! curl ${APP_SERVER} 2>&1 | grep bundle.js >/dev/null
   then
-    echo "App does not respond on airq.waag.org" | tee -a ${TMP_FILE}
+    echo "App does not respond on ${APP_SERVER}" | tee -a ${TMP_FILE}
     PASSED=false
   else
-    echo "App responds on airq.waag.org" | tee -a ${TMP_FILE}
+    echo "App responds on ${APP_SERVER}" | tee -a ${TMP_FILE}
   fi
 
 fi
