@@ -194,7 +194,7 @@ while ! $byebye do
       msg_hash[:i] = -1
       msg_hash[:message] = msg
       $stderr.puts "Sleep and retry"
-      sleep conf['airqdb']['retry']
+      sleep ms_conf['airqdb']['retry']
       retry
     rescue PG::InvalidTextRepresentation => e
       $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
@@ -202,7 +202,7 @@ while ! $byebye do
       msg_hash[:i] = -1
       msg_hash[:message] = msg
       $stderr.puts "Sleep and retry"
-      sleep conf['airqdb']['retry']
+      sleep ms_conf['airqdb']['retry']
       retry
     rescue PG::CharacterNotInRepertoire => e
       $stderr.puts "ERROR: wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
