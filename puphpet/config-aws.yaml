@@ -17,13 +17,15 @@ vagrantfile:
                         subnet_id: subnet-b04377d9
                         elastic_ip: 52.58.166.63
                         security_groups: sg-6e19f106
-                        ebs_size: 8
+                        ebs_size: 50
+                        ebs_type: gp2
+                        ebs_delete_on_termination: false
                         ebs_optimized: false
                         monitoring:
                         associate_public_ip: false
                         package_tags:
                         elb:
-                        terminate_on_shutdown: true
+                        terminate_on_shutdown: false
                         tags:
                           Name: 'airq server'
                           Project: airq

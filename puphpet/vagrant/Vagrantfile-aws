@@ -28,7 +28,12 @@ machines.each do |i, machine|
       aws.region                    = "#{machine['region']}"
       aws.instance_type             = "#{machine['instance_type']}"
       aws.ami                       = "#{machine['ami']}"
-      aws.block_device_mapping      = [{ 'DeviceName' => '/dev/sda1', 'Ebs.VolumeSize' => machine['ebs_size'] }]
+      aws.block_device_mapping      = [{
+                                        'DeviceName' => '/dev/sda1',
+                                        'Ebs.VolumeSize' => machine['ebs_size'] ,
+                                        'Ebs.VolumeType' => "#{machine['ebs_type']}",
+                                        'Ebs.DeleteOnTermination' => "#{machine['ebs_delete_on_termination']}"
+                                        }]
       aws.terminate_on_shutdown     = "#{machine['terminate_on_shutdown']}"
       aws.ebs_optimized             = "#{machine['ebs_optimized']}"
 
