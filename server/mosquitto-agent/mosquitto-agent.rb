@@ -175,19 +175,21 @@ while ! $byebye do
 
     #id = topic.delete(ms_conf['mqtt']['topic'].delete('+'))
 
-    parameters = nil
-
-    if (! msg_hash[:i].nil?)
-      parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
-            msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
-    else
-      $stderr.puts "WARNING: Old format detected, translate to new format and save msg"
-      parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
-            msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
-    end
-
     begin
+
+      parameters = nil
+
+      if (! msg_hash[:i].nil?)
+        parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
+              msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
+      else
+        $stderr.puts "WARNING: Old format detected, translate to new format and save msg"
+        parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
+              msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
+      end
+
       res = db_conn.exec_prepared("sensordata",  parameters)
+      
     rescue PG::NotNullViolation => e
       $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
