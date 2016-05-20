@@ -35,7 +35,7 @@ DBNAME=airq
 
 echo "#${HEADERS}" > ${OUTPUTFILE}
 
-sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone ${VALID_DATA} ;\" " > ${OUTPUTFILE}
+sudo su postgres -c "psql -d ${DBNAME} -t -A -F',' -c \"select ${HEADERS} from measures where srv_ts > '${MY_TIME}'::timestamp with time zone ${VALID_DATA} ;\" " >> ${OUTPUTFILE}
 
 if [ "$(cat ${OUTPUTFILE} | wc -l)" = "1" ]
 then
