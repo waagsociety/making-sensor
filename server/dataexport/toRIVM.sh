@@ -1,5 +1,25 @@
 #!/bin/bash
 
+if nslookup sensor.waag.org | grep Name | grep $(uname -n) >/dev/null
+then
+	# we are the official server, send data
+	:
+else
+	# we might be amazon that does not use a public name
+	MY_IP="$(curl --connect-timeout 10 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null)"
+
+	if [ -z "${MY_IP}" ]
+	then
+		echo "Not an amazon server, and also not a main server, exiting"
+		exit 1
+	fi
+	if ! nslookup sensor.waag.org | grep "${MY_IP}" >/dev/null
+	then
+		echo "This is amazon but not the main server"
+		exit 1
+	fi
+fi
+
 HOURS=${1}
 TMP_DIR=/tmp
 
