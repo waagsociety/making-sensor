@@ -45,6 +45,14 @@ if ( interactive == 'y' ){
   toFile <- 'y'  
 }
 
+if ( interactive == 'y' ){
+  perSensor <- readline(prompt="Separate sensors [y/N] ? ")
+}else{
+  perSensor <- 'n'  
+}
+
+## Read date range for graphics
+
 if (!exists("startDate")){
   startDate <- readline(prompt="Enter first day (ex:18-04-2016, \"\" for earliest available day) ")
   if (startDate == ""){
@@ -76,8 +84,9 @@ if ( interactive == 'y' ){
   start <- proc.time()
 }
 
-whereCondition <- "AND"
 ## Create WHERE condition
+whereCondition <- "AND"
+
 if(is.na(endDate)  && is.na(startDate) ){
   # no WHERE condition
   whereCondition <- paste(whereCondition,"TRUE")
@@ -100,7 +109,7 @@ command <- paste("psql -h localhost -p 9330 -U postgres -d airq  -A -F',' -c \""
 
 system(command)
 
-
+## Parse data from DB
 all <- read.csv("./all.csv", header=TRUE, stringsAsFactors = FALSE)
 
 if ( interactive == 'y' ){
@@ -114,19 +123,14 @@ all$tr_ts <- paste(gsub("\\.[0-9]*","",all$srv_ts),"00",sep="")
 all$corr_ts <- as.POSIXct(all$tr_ts, format = "%Y-%m-%d %H:%M:%S%z")
 stopifnot(sum(is.na(all$corr_ts))== 0)
 
+## Limit pm to positive values, set -1 as invalid
+all$pm25[all$pm25 < 0] <- -1
+all$pm10[all$pm10 < 0] <- -1
+
 ## uniform empty messages
 all$message[is.na(all$message) | all$message==""] <- NA
 
-#all$corr_ts <- as.POSIXct(paste(all$srv_ts,"00",sep=""), format = "%Y-%m-%d %H:%M:%S.%OS%z")
-#fout <- all[is.na(all$corr_ts),c("srv_ts","tr_ts","corr_ts")]
-#all$corr_ts[is.na(all$corr_ts)] <- as.POSIXct("01-01-2000 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
-
-
-## initialize start and end dates
-
-#startDate <- as.POSIXct("14-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
-#endDate <- as.POSIXct("18-04-2016 13:00:00",format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")
-
+## calculate start and end date with rounding
 startDate <- trunc(min(all$corr_ts), units = "days")
 endDate <- trunc(max(all$corr_ts), units = "days") + 60 * 60 * 24 -1
 
@@ -134,10 +138,14 @@ if ( interactive == 'y' ){
   start <- proc.time()
 }
 
-## reduce dataset to time interval
 
+## remove unnecessary columns and create data table
 sensorData <- data.table(all[c("id","corr_ts","message", measures)],key="id")
+
+## reduce dataset to time interval (step redundant since we query only for this range
 sensorData <- sensorData[corr_ts>=startDate & corr_ts<=endDate,]
+
+## calculate sensor ids
 sensorData$id <-as.factor(sensorData$id)
 
 idsInRange <- sensorData[,id,by = id]$id
@@ -146,6 +154,8 @@ if ( interactive == 'y' ){
   writeLines("\nAvailable sensor ids:")
   print(idsInRange)
 }
+
+## create data structure to calculate quantities per hour
 
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
 
@@ -187,6 +197,7 @@ while (index <= (len-(length(datatypes)*nlevels(idsInRange)) + 1))
     currentID <- levels(idsInRange)[id_index]
     idcandidates <- candidates & (sensorData$id == currentID)
 
+    ## calculate the datatype quantities per id
     bins$datapoints[index] <- sum( idcandidates & s_fulldata )
     bins$datapoints[index+1] <- sum( idcandidates & s_partialdata )
     bins$datapoints[index+2] <- sum( idcandidates & s_startup )
@@ -194,6 +205,7 @@ while (index <= (len-(length(datatypes)*nlevels(idsInRange)) + 1))
 
     for ( inner_index in 0:(length(datatypes)-1) )
     {
+      ## assign current id and time to the previous datatype quantities, with their type assigned
       bins$datatype[index+inner_index] <- datatypes[inner_index+1]
       bins$tm[index+inner_index] <- timeNow
       bins$id[index+inner_index] <- currentID
@@ -223,20 +235,38 @@ if ( toFile == 'y' ){
 
 for (i in 1:length(datatypes))
 {
-  
-  if ( toFile != 'y' ){
-    readline(prompt=paste("Press enter to see ",datatypes[i],sep=""))
-  }
-  
   currentBin <- bins[bins$datatype == datatypes[i],]
   
-  pl <- ggplot(data=currentBin, aes(x=tm, y=datapoints, group=id, colour=id)) + 
-    geom_line() +
-    xlab("Time") +
-    ylab(paste("Nr of",datatypes[i],"sensor msg")) +
-    theme(axis.text.x = element_text(angle = -90, hjust = 1))
-  
-  print(pl)
+  for ( id_index in 1: nlevels(idsInRange) )
+  {
+    if ( perSensor == 'y' ){
+      ## select only a particular sensor
+      currentID <- levels(idsInRange)[id_index]
+      selectID <- (currentBin$id == currentID)
+    }else{
+      ## vectors are initialized to FALSE, this includes all the rows
+      currentID <- "all"
+      selectID <- !(vector(mode = "logical",length = nrow(currentBin)))
+    }
+    
+    if ( toFile != 'y' ){
+      readline(prompt=paste("Press enter to see ",datatypes[i]," for sensor: ",currentID,sep=""))
+    }
+    
+    pl <- ggplot(data=currentBin[selectID,], aes(x=tm, y=datapoints, group=id, colour=id)) + 
+      geom_line() +
+      xlab("Time") +
+      ylab(paste("Nr of",datatypes[i],"sensor msg")) +
+      theme(axis.text.x = element_text(angle = -90, hjust = 1))
+    
+    print(pl)
+    
+    if ( perSensor != 'y' ){
+      ## we do not need to loop to plot separate sensors
+      break
+    }
+    
+  }
   
 }
 #pl <- ggplot(bins, aes(x=tm,y=datapoints, fill=factor(datatype)) ) + geom_bar(position="dodge",stat="identity") +
@@ -255,16 +285,35 @@ for (i in 1:length(measures))
   maat <- median(validData[,measures[i],with=FALSE][[1]])
   
 #  inData <- validData[abs(get(measures[i])) <= abs(maat*normalFactor),]
-  if ( toFile != 'y' ){
-    readline(prompt=paste("Press enter to see ",measures[i],sep=""))
-  }
-  
-  pl <- ggplot(data=validData, aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
-    geom_line() +
-    xlab("Time") +
-    theme(axis.text.x = element_text(angle = -90, hjust = 1))
+  for ( id_index in 1: nlevels(idsInRange) )
+  {
+    if ( perSensor == 'y' ){
+      ## select only a particular sensor
+      currentID <- levels(idsInRange)[id_index]
+      selectID <- (validData$id == currentID)
+    }else{
+      ## vectors are initialized to FALSE, this includes all the rows
+      currentID <- "all"
+      selectID <- !(vector(mode = "logical",length = nrow(validData)))
+    }
+
+    if ( toFile != 'y' ){
+      readline(prompt=paste("Press enter to see ",measures[i]," for sensor: ",currentID,sep=""))
+    }
     
-  print(pl)
+    pl <- ggplot(data=validData[selectID,], aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
+      geom_line() +
+      xlab("Time") +
+      theme(axis.text.x = element_text(angle = -90, hjust = 1))
+      
+    print(pl)
+    
+    if ( perSensor != 'y' ){
+      ## we do not need to loop to plot separate sensors
+      break
+    }
+  
+  }
 }
 
 if ( toFile == 'y' ){
