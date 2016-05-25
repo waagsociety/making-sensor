@@ -6,7 +6,7 @@
 
 THRESHOLD=15
 TMP_FILE=/tmp/airq
-EMAIL_ADDRESS=stefano@waag.org
+EMAIL_ADDRESS=Stefano.Bocconi@gmail.com
 
 
 if [ ! "$#" = 1 ]
@@ -74,7 +74,7 @@ then
   clear
 fi
 
-echo "Test start" | tee ${TMP_FILE}
+echo "Test start at $(date)" | tee ${TMP_FILE}
 
 PASSED=true
 
