@@ -3,7 +3,7 @@
 library(ggplot2)
 #library(reshape2)
 library(data.table)
-#library(Hmisc)
+library(Hmisc)
 
 ###################
 # Functions
@@ -23,6 +23,18 @@ putMsg <- function(msg,major=FALSE,localStart=NULL){
     writeLines(paste("## ",msg))
   }
 }
+
+calculateInvalidSensors <- function(){
+  normalFactor <- 50
+  center <- median(validData[,measures[i],with=FALSE][[1]])
+  #extent <- abs(mad(validData[,measures[i],with=FALSE][[1]],na.rm = TRUE)) * normalFactor
+  extent <- abs(center)
+
+  ids <- unique(validData[(get(measures[i]) < (center - extent)) | (get(measures[i]) > (center + extent)),id])
+
+    return(ids)
+}
+
 ###################
 # Inputs parameters
 ###################
@@ -105,6 +117,10 @@ if( ! is.na(endDate) ){
 
 stopifnot( (endDate >= startDate) || is.na(endDate)  || is.na(startDate) )
 
+#######################################################
+## Start program after determining options
+#######################################################
+
 putMsg("Start calculating",major=TRUE,localStart = NULL)
 totalStart <- start_time
 
@@ -160,6 +176,16 @@ if( is.na(endDate)){
   endDate <- max(all$corr_ts)
 }
 
+## Open file if writing to file
+if ( toFile == 'y' ){
+  title <- paste("Report at ", Sys.time(),  sprintf(" from %s to %s",
+                                                    as.character(startDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam"),
+                                                    as.character(endDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam")),".pdf", sep="")
+  title <- gsub(":","_",title)
+  dir <- "/Users/SB/Downloads/"
+  pdf(file=paste(dir,title,sep=""),title=title,paper="a4r",width=14)
+}
+
 ## remove unnecessary columns and create data table
 sensorData <- data.table(all[c("id","corr_ts","message", measures)],key="id")
 
@@ -177,9 +203,9 @@ putMsg(paste("Available sensor ids:",paste(idsInRange,sep="",collapse=",")))
 
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
 
-datatypes <- c("Full data", "Partial data", "Startup")
+dataTypes <- c("Full data", "Partial data", "Startup")
 
-len <- length(datatypes) * as.integer(hours) * nlevels(idsInRange)
+len <- length(dataTypes) * as.integer(hours) * nlevels(idsInRange)
 
 bins <- data.frame(tm=.POSIXct(character(len)),
                    id=integer(len),
@@ -192,6 +218,7 @@ putMsg(paste("Done calculating time frame, hours: ",hours),major=TRUE,localStart
 putMsg(sprintf("Time interval for plotting: from %s to %s",
                as.character(startDate,format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam"),
                as.character(endDate,format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")))
+
 putMsg("Calculating sensor activity")
 
 timeNow <- startDate
@@ -204,10 +231,12 @@ s_startup <- (!is.na(sensorData$message))
 
 stopifnot( sum(s_fulldata) + sum (s_partialdata) + sum(s_startup) == nrow(sensorData))
 
-while (index <= (len-(length(datatypes)*nlevels(idsInRange)) + 1))
+## Loop to calculate activities per hourly time slot
+while (index <= (len-(length(dataTypes)*nlevels(idsInRange)) + 1))
 {
   candidates <- sensorData$corr_ts<(timeNow+3600) & sensorData$corr_ts >= timeNow
   
+  ## TODO: Loop for each sensor, maybe can be subsituted with matrix operations
   for ( id_index in 1: nlevels(idsInRange) )
   {
     currentID <- levels(idsInRange)[id_index]
@@ -219,10 +248,10 @@ while (index <= (len-(length(datatypes)*nlevels(idsInRange)) + 1))
     bins$datapoints[index+2] <- sum( idcandidates & s_startup )
     
 
-    for ( inner_index in 0:(length(datatypes)-1) )
+    for ( inner_index in 0:(length(dataTypes)-1) )
     {
       ## assign current id and time to the previous datatype quantities, with their type assigned
-      bins$datatype[index+inner_index] <- datatypes[inner_index+1]
+      bins$datatype[index+inner_index] <- dataTypes[inner_index+1]
       bins$tm[index+inner_index] <- timeNow
       bins$id[index+inner_index] <- currentID
     }
@@ -236,19 +265,9 @@ while (index <= (len-(length(datatypes)*nlevels(idsInRange)) + 1))
 putMsg("Done calculating sensor activity",major=TRUE,localStart = start_time)
 putMsg("Generating activity graphs")
 
-if ( toFile == 'y' ){
-  title <- paste("Report at ", Sys.time(),  sprintf(" from %s to %s",
-                                                    as.character(startDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam"),
-                                                    as.character(endDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam")),".pdf", sep="")
-  title <- gsub(":","_",title)
-  dir <- "/Users/SB/Downloads/"
-  pdf(file=paste(dir,title,sep=""),title=title,paper="a4r",width=14)
-}
-
-
-for (i in 1:length(datatypes))
+for (i in 1:length(dataTypes))
 {
-  currentBin <- bins[bins$datatype == datatypes[i],]
+  currentBin <- bins[bins$datatype == dataTypes[i],]
   
   for ( id_index in 1: nlevels(idsInRange) )
   {
@@ -263,13 +282,13 @@ for (i in 1:length(datatypes))
     }
     
     if ( toFile != 'y' ){
-      readline(prompt=paste("Press enter to see ",datatypes[i]," for sensor: ",currentID,sep=""))
+      readline(prompt=paste("Press enter to see ",dataTypes[i]," for sensor: ",currentID,sep=""))
     }
     
     pl <- ggplot(data=currentBin[selectID,], aes(x=tm, y=datapoints, group=id, colour=id)) + 
       geom_line() +
       xlab("Time") +
-      ylab(paste("Nr of",datatypes[i],"sensor msg")) +
+      ylab(paste("Nr of",dataTypes[i],"sensor msg")) +
       theme(axis.text.x = element_text(angle = -90, hjust = 1))
     
     print(pl)
@@ -286,16 +305,13 @@ for (i in 1:length(datatypes))
 putMsg("Done generating activity graphs",major=TRUE,localStart = start_time)
 putMsg("Generating sensor measure graphs")
 
-normalFactor <- 50
+
 validData <- sensorData[!s_startup,]
 
 for (i in 1:length(measures))
 {
-  center <- median(validData[,measures[i],with=FALSE][[1]])
-  #extent <- abs(mad(validData[,measures[i],with=FALSE][[1]],na.rm = TRUE)) * normalFactor
-  extent <- abs(center)
-  
-  outIds <- unique(validData[(get(measures[i]) < (center - extent)) | (get(measures[i]) > (center + extent)),id])
+
+  outIds <- calculateInvalidSensors()
   
   if (length(outIds) > 0){
     putMsg(paste("SKIPPING: Out of range sensor ids:",paste(outIds,sep="",collapse=","),"for measure",measures[i]))
@@ -351,148 +367,100 @@ TIMESLOT_MIN <- 5
 MIN_CORR_SPAN <- TIMESLOT_MIN * ACCEPTABLE_SAMPLE_NR
 
 
-putMsg(sprintf("Calculating correlation with slots of %d min with at least %d samples for a SE of %f and corr of %f",
-                     TIMESLOT_MIN,ACCEPTABLE_SAMPLE_NR,ACCEPTABLE_SE,TARGET_CORR))
+startCorrTime <- trunc(min(validData$corr_ts),units = "mins")
+endCorrTime <- trunc(max(validData$corr_ts),units = "mins") + 60
 
-for (i in 1:length(measures))
-{
-  ## Initialize matrix for every measure
-  corr_matrix <- matrix(0,nrow=nlevels(idsInRange),ncol=nlevels(idsInRange)+1,byrow=FALSE)
-  ## Consider only measurements that are present (all sensors)
-  valid_measures <- as.logical(!is.na(validData[,measures[i],with=FALSE]))
+if( startCorrTime >= endCorrTime){
+  putMsg("SKIPPING: No overlap time for cross-correlation")
+}else{
+
+  # Calculate nr of time slots for cross-correlation, add 1 if it is not an exact multiple
+  nr_mins <- as.integer(difftime(endCorrTime,startCorrTime,units="mins"))
   
-  for ( id1_index in 1: (nlevels(idsInRange) -1))
-  {
-    ## select only a particular sensor
-    firstID <- levels(idsInRange)[id1_index]
-    firstSelection <- (validData$id == firstID) & valid_measures
+  toAdd <- sum( ! (nr_mins %% TIMESLOT_MIN == 0))
+  
+  len <- nr_mins %/% TIMESLOT_MIN + toAdd
+  
+  putMsg(sprintf("Calculating correlation with slots of %d min with at least %d samples for a SE of %f and corr of %f",
+                 TIMESLOT_MIN,ACCEPTABLE_SAMPLE_NR,ACCEPTABLE_SE,TARGET_CORR))
+  putMsg(sprintf("Time period from %s to %s, time slots: %d",
+                 startCorrTime,endCorrTime,len))
+  
+  
+  ## temporary data structure to hold the averages of the sensor measurements
+  corr_data <- data.frame(tm=.POSIXct(character(len*nlevels(idsInRange))),
+                          id=factor(idsInRange),
+                          matrix(NA,nrow=len*nlevels(idsInRange),ncol=length(measures),byrow=FALSE))
+  
+  colnames(corr_data)[-1] <- c("id",measures)
+  
+  joint1 <- data.table(idsInRange)
+  colnames(joint1) <- "id"
+  setkey(joint1,id)
+  
+  timeNow <- startCorrTime
+  
+  # calculate averages
+  for ( min_slot in seq(1, (nr_mins %/% TIMESLOT_MIN + toAdd)*nlevels(idsInRange), by = nlevels(idsInRange)) ){
     
-    corr_matrix[id1_index,1] <- firstID
-    corr_matrix[id1_index,id1_index+1] <- 1
+    candidates <- validData$corr_ts<(timeNow+(60*TIMESLOT_MIN)) & validData$corr_ts >= timeNow
+    
+    
+    joint2 <- data.table(validData[candidates,lapply(.SD,mean),by=id,.SDcols=measures],key="id")
+    
+    corr_data$tm[min_slot:(min_slot+nlevels(idsInRange)-1)] <- timeNow
+    corr_data[min_slot:(min_slot+nlevels(idsInRange)-1),-1] <- joint2[joint1]
+    
+    timeNow <- timeNow + 60*TIMESLOT_MIN
+  }
 
-    ## This is useful only at the last iteration
-    if(id1_index == (nlevels(idsInRange) -1)){
-      corr_matrix[id1_index+1,1] <- firstID
-      corr_matrix[id1_index+1,id1_index+2] <- 1
+
+  for (i in 1:length(measures)) {
+    
+    ## Initialize matrix for every measure
+    corr_matrix <- rcorr(as.matrix(dcast(corr_data,tm~id,value.var=measures[i])[,2:(nlevels(idsInRange)+1)]),type = "pearson")
+    
+    notEnoughSamples <- which(corr_matrix$n < ACCEPTABLE_SAMPLE_NR & lower.tri(corr_matrix$n,diag=FALSE),arr.ind=TRUE)
+
+    if( length(notEnoughSamples) > 0 ){
+      putMsg(paste("WARNING: Not enough samples for",measures[i],"for sensors:", 
+                     paste(row.names(corr_matrix$r)[notEnoughSamples[,1]],
+                           colnames(corr_matrix$r)[notEnoughSamples[,2]],sep=",")))
     }
     
-    for ( id2_index in (id1_index+1): nlevels(idsInRange) ){
-      ## select only a particular sensor
-      secondID <- levels(idsInRange)[id2_index]
-      secondSelection <- (validData$id == secondID) & valid_measures
-
-#       if ( interactive == 'y' ){
-#         writeLines(paste("Correlating", firstID,"with",secondID,"for",measures[i]))
-#       }
-      
-      
-#       if( (sum(firstSelection) < ACCEPTABLE_SAMPLE_NR) || (sum(secondSelection) < ACCEPTABLE_SAMPLE_NR ) ){
-#         if ( interactive == 'y' ){
-#           if( (sum(firstSelection) < ACCEPTABLE_SAMPLE_NR) && (sum(secondSelection) < ACCEPTABLE_SAMPLE_NR ) ){
-#             msg <- paste("Not enough samples for sensor", firstID,"and",secondID,"for",measures[i])
-#           }else if (sum(firstSelection) < ACCEPTABLE_SAMPLE_NR){
-#             msg <- paste("Not enough samples for sensor", firstID,"for",measures[i])
-#           }else{
-#             msg <- paste("Not enough samples for sensor", secondID,"for",measures[i])
-#           }
-#           writeLines(msg)
-#         }
-#         next
-#       }
-      
-      startCorrTime <- trunc(max(min(validData$corr_ts[firstSelection]),min(validData$corr_ts[secondSelection])),units = "mins")
-      endCorrTime <- trunc(min(max(validData$corr_ts[firstSelection]),max(validData$corr_ts[secondSelection])),units = "mins") + 60
-
-      # if( startCorrTime + MIN_CORR_SPAN > endCorrTime){
-      if( startCorrTime >= endCorrTime){
-        putMsg(paste("SKIPPING: No overlap time for ", firstID," with ",secondID," for ",measures[i], sep=""))
-        next
-      }
-      
-      # Calculate nr of time slots for cross-correlation, add 1 if it is not an exact multiple
-      nr_mins <- as.integer(difftime(endCorrTime,startCorrTime,units="mins"))
-      
-      toAdd <- sum( ! (nr_mins %% TIMESLOT_MIN == 0))
-      
-      len <- nr_mins %/% TIMESLOT_MIN + toAdd
-      
-      ## temporary data structure to hold the averages of the sensor measurements
-      corr_data <- data.frame(tm=.POSIXct(character(len)),
-                              id1_data=numeric(len),
-                              id2_data=numeric(len)
-                              )
-      
-
-      timeNow <- startCorrTime
-      
-      # calculate averages
-      for ( min_slot in 1: (nr_mins %/% TIMESLOT_MIN + toAdd) ){
-
-        candidates <- validData$corr_ts<(timeNow+(60*TIMESLOT_MIN)) & validData$corr_ts >= timeNow
-        first_corr_data <- validData[firstSelection&candidates,measures[i],with=FALSE]
-        second_corr_data <- validData[secondSelection&candidates,measures[i],with=FALSE]
-
-        corr_data$tm[min_slot] <- timeNow
-        
-        corr_data$id1_data[min_slot] <- mean(first_corr_data[[1]])
-        corr_data$id2_data[min_slot] <- mean(second_corr_data[[1]])
-        
-        timeNow <- timeNow + 60*TIMESLOT_MIN
-      }
-      
-      if( sum(!is.na(corr_data[,2])) < ACCEPTABLE_SAMPLE_NR || sum(!is.na(corr_data[,3])) < ACCEPTABLE_SAMPLE_NR ){
-        if ( interactive == 'y' ){
-          putMsg(paste("WARNING: Not enough samples for", firstID,
-                       "(",sum(!is.na(corr_data[,2])),")",
-                       "with", secondID,
-                       "(",sum(!is.na(corr_data[,3])),")",
-                       "for",measures[i]))
-        }
-        #next
-      }
-      ## check we have pairs to correlate as well as standard deviation FOR PAIRS since we are doing pairwise complete obs
-      if( sum(!is.na(corr_data[,3]) & !is.na(corr_data[,2])) == 0 ||
-          sd(corr_data[!is.na(corr_data[,3]),2],na.rm = TRUE) == 0 || 
-         sd(corr_data[!is.na(corr_data[,2]),3],na.rm = TRUE) == 0){
-        
-        putMsg(paste("WARNING: Cross correlation cannot be computed, setting to -1. Measure:",measures[i],"Overapping samples:",
-                     sum(!is.na(corr_data[,3]) & !is.na(corr_data[,2])),
-                     "\n\tsensor: ",firstID, "sd", sd(corr_data[!is.na(corr_data[,3]),2],na.rm = TRUE),
-                     "\n\tsensor:", secondID, "sd", sd(corr_data[!is.na(corr_data[,2]),3],na.rm = TRUE)))
-        
-        corr_matrix[id1_index,1+id2_index] <- -1
-        corr_matrix[id2_index,1+id1_index] <- -1
-        
-      }else{
-        
-        corr_result <- cor(corr_data[,2:3], method = "pearson", use = "pairwise.complete.obs")
-        corr_matrix[id1_index,1+id2_index] <- corr_result[1,2]
-        corr_matrix[id2_index,1+id1_index] <- corr_result[1,2]
-        
-      }
-      
-      stopifnot(sum(is.na(corr_matrix)) == 0)
+    notEnoughConfidence <- which(corr_matrix$P > ACCEPTABLE_SE & lower.tri(corr_matrix$P,diag=FALSE),arr.ind=TRUE)
+    
+    if( length(notEnoughConfidence) > 0 ){
+      putMsg(paste("WARNING: Not enough confidence for",measures[i],"for sensors:", 
+                   paste(row.names(corr_matrix$P)[notEnoughConfidence[,1]],
+                         colnames(corr_matrix$P)[notEnoughConfidence[,2]],sep=",")))
     }
+    
+    
+    corr_matrix$r[is.na(corr_matrix$r)] <- -1
+    
+    stopifnot(sum(is.na(corr_matrix$r)) == 0)
+    
+    corr_DF <- data.frame(id=idsInRange,corr_matrix$r,stringsAsFactors = FALSE)
+      
+    colnames(corr_DF) <- c("id",as.character(idsInRange))
+    corr_toDisplay <- melt(corr_DF,"id",2:ncol(corr_DF))
+    
+    corr_toDisplay$value <- as.numeric(as.character(corr_toDisplay$value))
+      
+    if ( toFile != 'y' ){
+      readline(prompt=paste("Press enter to see correlation for ",measures[i]," for all sensors",sep=""))
+    }
+    
+    pl <- ggplot(data=corr_toDisplay, aes(x=variable, y=value, group=id,colour=id)) + 
+      geom_line() +
+      xlab("sensor nr") +
+      ylab(paste(measures[i],"correlation")) +
+      coord_cartesian(ylim = c(-1, 1)) 
+    
+    print(pl)
+      
   }
-  corr_DF <- data.frame(corr_matrix,stringsAsFactors = FALSE)
-    
-  colnames(corr_DF) <- c("id",as.character(idsInRange))
-  corr_toDisplay <- melt(corr_DF,"id",2:ncol(corr_DF))
-  
-  corr_toDisplay$value <- as.numeric(as.character(corr_toDisplay$value))
-    
-  if ( toFile != 'y' ){
-    readline(prompt=paste("Press enter to see correlation for ",measures[i]," for all sensors",sep=""))
-  }
-  
-  pl <- ggplot(data=corr_toDisplay, aes(x=variable, y=value, group=id,colour=id)) + 
-    geom_line() +
-    xlab("sensor nr") +
-    ylab(paste(measures[i],"correlation")) +
-    coord_cartesian(ylim = c(-1, 1)) 
-  
-  print(pl)
-    
 }
 
 if ( toFile == 'y' ){
