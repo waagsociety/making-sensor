@@ -199,20 +199,7 @@ idsInRange <- sensorData[,id,by = id]$id
 
 putMsg(paste("Available sensor ids:",paste(idsInRange,sep="",collapse=",")))
 
-## create data structure to calculate quantities per hour
-
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
-
-dataTypes <- c("Full data", "Partial data", "Startup")
-
-len <- length(dataTypes) * as.integer(hours) * nlevels(idsInRange)
-
-bins <- data.frame(tm=.POSIXct(character(len)),
-                   id=integer(len),
-                   datapoints=integer(len),
-                   datatype=character(len),
-                   stringsAsFactors = FALSE)
-
 
 putMsg(paste("Done calculating time frame, hours: ",hours),major=TRUE,localStart = start_time)
 putMsg(sprintf("Time interval for plotting: from %s to %s",
@@ -220,6 +207,18 @@ putMsg(sprintf("Time interval for plotting: from %s to %s",
                as.character(endDate,format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")))
 
 putMsg("Calculating sensor activity")
+
+## create data structure to calculate quantities per hour
+
+len <- as.integer(hours) * nlevels(idsInRange)
+
+bins <- data.frame(tm=.POSIXct(character(len)),
+                   id=factor(idsInRange),
+                   integer(len),
+                   integer(len),
+                   integer(len),
+                   stringsAsFactors = FALSE)
+
 
 timeNow <- startDate
 index <- 1
@@ -231,61 +230,53 @@ s_startup <- (!is.na(sensorData$message))
 
 stopifnot( sum(s_fulldata) + sum (s_partialdata) + sum(s_startup) == nrow(sensorData))
 
+dataTypes <- c("Full data", "Partial data", "Startup")
+
+colnames(bins[3:5]) <- dataTypes
+
+joint1 <- data.table(idsInRange)
+colnames(joint1) <- "id"
+setkey(joint1,id)
+
+
 ## Loop to calculate activities per hourly time slot
-while (index <= (len-(length(dataTypes)*nlevels(idsInRange)) + 1))
-{
+for (index in seq(1, len, by = nlevels(idsInRange))){
   candidates <- sensorData$corr_ts<(timeNow+3600) & sensorData$corr_ts >= timeNow
   
-  ## TODO: Loop for each sensor, maybe can be subsituted with matrix operations
-  for ( id_index in 1: nlevels(idsInRange) )
-  {
-    currentID <- levels(idsInRange)[id_index]
-    idcandidates <- candidates & (sensorData$id == currentID)
-
-    ## calculate the datatype quantities per id
-    bins$datapoints[index] <- sum( idcandidates & s_fulldata )
-    bins$datapoints[index+1] <- sum( idcandidates & s_partialdata )
-    bins$datapoints[index+2] <- sum( idcandidates & s_startup )
-    
-
-    for ( inner_index in 0:(length(dataTypes)-1) )
-    {
-      ## assign current id and time to the previous datatype quantities, with their type assigned
-      bins$datatype[index+inner_index] <- dataTypes[inner_index+1]
-      bins$tm[index+inner_index] <- timeNow
-      bins$id[index+inner_index] <- currentID
-    }
-    index <- index + 3  
-  }
+  joint2 <- data.table(sensorData[candidates&s_fulldata,lapply(.SD,length),by=id,.SDcols="id"],key="id")
+  joint3 <- data.table(sensorData[candidates&s_partialdata,lapply(.SD,length),by=id,.SDcols="id"],key="id")
+  joint4 <- data.table(sensorData[candidates&s_startup,lapply(.SD,length),by=id,.SDcols="id"],key="id")
+  
+  bins$tm[index:(index+nlevels(idsInRange)-1)] <- timeNow
+  bins[index:(index+nlevels(idsInRange)-1),2:ncol(bins)] <- joint2[joint3[joint4[joint1]]]
   
   timeNow <- timeNow + 3600
-  
 }
+
+bins[is.na(bins)] <- 0
 
 putMsg("Done calculating sensor activity",major=TRUE,localStart = start_time)
 putMsg("Generating activity graphs")
 
 for (i in 1:length(dataTypes))
 {
-  currentBin <- bins[bins$datatype == dataTypes[i],]
-  
   for ( id_index in 1: nlevels(idsInRange) )
   {
     if ( perSensor == 'y' ){
       ## select only a particular sensor
       currentID <- levels(idsInRange)[id_index]
-      selectID <- (currentBin$id == currentID)
+      selectID <- (bins$id == currentID)
     }else{
       ## vectors are initialized to FALSE, this includes all the rows
       currentID <- "all"
-      selectID <- !(vector(mode = "logical",length = nrow(currentBin)))
+      selectID <- !(vector(mode = "logical",length = nrow(bins)))
     }
     
     if ( toFile != 'y' ){
       readline(prompt=paste("Press enter to see ",dataTypes[i]," for sensor: ",currentID,sep=""))
     }
     
-    pl <- ggplot(data=currentBin[selectID,], aes(x=tm, y=datapoints, group=id, colour=id)) + 
+    pl <- ggplot(data=bins[selectID,], aes(x=tm, y=bins[selectID,i+2], group=id, colour=id)) + 
       geom_line() +
       xlab("Time") +
       ylab(paste("Nr of",dataTypes[i],"sensor msg")) +
@@ -329,9 +320,12 @@ for (i in 1:length(measures))
       currentID <- usableIDs
       selectID <- validData$id %in% usableIDs
     }
-
+    if (sum(!is.na(validData[selectID,get(measures[i])])) == 0){
+      putMsg(paste("WARNING: No valid data for sensor id(s):",paste(currentID,sep="",collapse=","),"for measure",measures[i]))
+      next
+    }
     if ( toFile != 'y' ){
-      readline(prompt=paste("Press enter to see ",measures[i]," for sensor: ",as.character(currentID),sep=""))
+      readline(prompt=paste("Press enter to see ",measures[i]," for sensor: ",paste(currentID,sep="",collapse=","),sep=""))
     }
     
     pl <- ggplot(data=validData[selectID,], aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
@@ -393,10 +387,6 @@ if( startCorrTime >= endCorrTime){
                           matrix(NA,nrow=len*nlevels(idsInRange),ncol=length(measures),byrow=FALSE))
   
   colnames(corr_data)[-1] <- c("id",measures)
-  
-  joint1 <- data.table(idsInRange)
-  colnames(joint1) <- "id"
-  setkey(joint1,id)
   
   timeNow <- startCorrTime
   
