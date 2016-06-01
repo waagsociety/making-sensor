@@ -64,9 +64,16 @@ parse_yaml() {
 
 diff_min(){
   local DATA_TIME="${1}00"
-  local DATA_S_TIME=$(date -j -f "%Y-%m-%d %H:%M:%S%z" "${DATA_TIME}" "+%s")
+  if date -j >/dev/null 2>&1
+  then
+    local DATA_S_TIME=$(date -j -f "%Y-%m-%d %H:%M:%S%z" "${DATA_TIME}" "+%s")
+    ELAPSED_MIN=$(date -r $(($(date "+%s") - ${DATA_S_TIME})) "+%-M")
+  else
+    local DATA_S_TIME=$(date -d "${DATA_TIME}" "+%s")
+    local NOW=$(date +%s)
+    ELAPSED_MIN=$(( (${NOW}-${DATA_S_TIME}) / 60 ))
+  fi
 
-  ELAPSED_MIN=$(date -r $(($(date "+%s") - ${DATA_S_TIME})) "+%-M")
 }
 
 if [ ! -z ${TERM} ]
@@ -205,6 +212,7 @@ if [ ! "$PASSED" = "true" ]
 then
   echo "Test NOT passed" | tee -a ${TMP_FILE}
   mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+  #osascript -e 'tell app "System Events" to display dialog "AIRQ Test NOT passed!!"'
 else
   echo "Test passed" | tee -a ${TMP_FILE}
 fi
