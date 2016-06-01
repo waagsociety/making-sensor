@@ -2,10 +2,11 @@
 # Backup DBs
 
 TARGET=${1}
+AWS_HOST="52.58.166.63"
 
 if [ "${TARGET} " == " " ]
 then
-  if nslookup sensor.waag.org | grep waag.org > /dev/null
+  if ! nslookup sensor.waag.org | grep "${AWS_HOST}"  > /dev/null
   then
      TARGET="WAAG"
    else
@@ -19,7 +20,7 @@ then
   BACKUPDIR=/opt/airqbk_aws
   PORT=22
   USER=ubuntu
-  HOST=52.58.166.63
+  HOST=${AWS_HOST}
 elif [ "${TARGET} " == "WAAG " ]
 then
   BACKUPDIR=/opt/airqbk_waag
