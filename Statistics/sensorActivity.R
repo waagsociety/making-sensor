@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(ggplot2)
+library(scales)
 #library(reshape2)
 library(data.table)
 library(Hmisc)
@@ -128,26 +129,27 @@ putMsg("Reading data",major=FALSE)
 
 ## Create WHERE condition
 whereCondition <- "AND"
+MY_TZ <- base::format(Sys.time(), format="%Z")
 
 if(is.na(endDate)  && is.na(startDate) ){
   # no WHERE condition
   whereCondition <- paste(whereCondition,"TRUE")
 }else{
   if ( !is.na(startDate) ){
-    whereCondition <- paste(whereCondition, " srv_ts >= '",startDate,"'",sep="")
+    whereCondition <- paste(whereCondition, " srv_ts >= '",startDate," ",MY_TZ,"'",sep="")
   }
   if ( !is.na(startDate) && !is.na(endDate) ){
     whereCondition <- paste(whereCondition, "AND")
   }
   if ( !is.na(endDate) ){
-    whereCondition <- paste(whereCondition, " srv_ts <= '",endDate,"'",sep="")
+    whereCondition <- paste(whereCondition, " srv_ts <= '",endDate," ",MY_TZ,"'",sep="")
   }
 }
 
 
 ## Read data from tunnel to server
 query <- paste("select * from measures where id > 100",whereCondition)
-command <- paste("PGPASSWORD=postgres psql -h localhost -p 9330 -U postgres -d airq  -A -F',' -c \"", query, "\" | grep -v 'rows)' > ./all.csv", sep="")
+command <- paste("PGPASSWORD=postgres psql -h localhost -p 9730 -U postgres -d airq  -A -F',' -c \"", query, "\" | grep -v 'rows)' > ./all.csv", sep="")
 
 system(command)
 
@@ -280,7 +282,8 @@ for (i in 1:length(dataTypes))
       geom_line() +
       xlab("Time") +
       ylab(paste("Nr of",dataTypes[i],"sensor msg")) +
-      theme(axis.text.x = element_text(angle = -90, hjust = 1))
+      theme(axis.text.x = element_text(angle = -90, hjust = 1)) +
+      scale_x_datetime(breaks = date_breaks("1 hour"))
     
     print(pl)
     
