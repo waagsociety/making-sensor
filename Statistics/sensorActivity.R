@@ -147,7 +147,7 @@ if(is.na(endDate)  && is.na(startDate) ){
 
 ## Read data from tunnel to server
 query <- paste("select * from measures where id > 100",whereCondition)
-command <- paste("psql -h localhost -p 9330 -U postgres -d airq  -A -F',' -c \"", query, "\" | grep -v 'rows)' > ./all.csv", sep="")
+command <- paste("PGPASSWORD=postgres psql -h localhost -p 9330 -U postgres -d airq  -A -F',' -c \"", query, "\" | grep -v 'rows)' > ./all.csv", sep="")
 
 system(command)
 
