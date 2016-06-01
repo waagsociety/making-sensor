@@ -6,22 +6,34 @@
 
 THRESHOLD=15
 TMP_FILE=/tmp/airq
-EMAIL_ADDRESS=Stefano.Bocconi@gmail.com
+EMAIL_ADDRESS=stefano@waag.org
 
+TARGET=${1}
+AWS_HOST="52.58.166.63"
 
-if [ ! "$#" = 1 ]
+if [ "${TARGET} " == " " ]
 then
-  echo "Usage: specify aws or waag" | tee ${TMP_FILE}
-  mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
-  exit 1
+  if ! nslookup sensor.waag.org | grep "${AWS_HOST}"  > /dev/null
+  then
+     TARGET="waag"
+   else
+     TARGET="aws"
+   fi
 fi
+
+# if [ ! "$#" = 1 ]
+# then
+#   echo "Usage: specify aws or waag" | tee ${TMP_FILE}
+#   mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+#   exit 1
+# fi
 
 
 ##########################
 # Host specific parameters
 ##########################
 
-if [ "${1}" = "aws" ]
+if [ "${TARGET}" = "aws" ]
 then
   MY_HOST=52.58.166.63
   SENSORPORT=80
@@ -29,7 +41,7 @@ then
   SSH_PORT=22
   APP_SERVER=airq.waag.org
   MQTT_AGENT_LOG='/var/log/mosquitto-agent/mosquitto-agent.log'
-elif [ "${1}" = "waag" ]
+elif [ "${TARGET}" = "waag" ]
 then
 #  set -x
   MY_HOST=sensor.waag.org
@@ -81,7 +93,7 @@ then
   clear
 fi
 
-echo "Test start at $(date)" | tee ${TMP_FILE}
+echo "Test start at $(date) for ${TARGET}" | tee ${TMP_FILE}
 
 PASSED=true
 
