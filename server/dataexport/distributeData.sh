@@ -18,7 +18,7 @@ parse_yaml() {
 
 TARGET=${1}
 AWS_HOST="52.58.166.63"
-EMAIL_ADDRESS="stefano@waag.org"
+EMAIL_ADDRESS="mijling@knmi.nl"
 
 if [ "${TARGET} " == " " ]
 then
@@ -96,5 +96,5 @@ then
 	exit 1
 else
   echo "Sensor data for the past day at $(date) in ${OUTPUTFILE}"
-  echo "Sensor data file automatically generated at $(date).\nPlease note that data can use a different timezone\n" | mail -s "Sensor data for the past day" ${EMAIL_ADDRESS} --content-type="text/csv" --attach=${OUTPUTFILE}
+  echo -e "Sensor data file automatically generated at $(date).\nPlease note that data can use a different timezone\n" | mail -s "Sensor data for the past day" ${EMAIL_ADDRESS} --content-type="text/csv" --attach=${OUTPUTFILE}
 fi
