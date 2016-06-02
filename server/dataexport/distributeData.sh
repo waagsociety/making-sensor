@@ -96,5 +96,5 @@ then
 	exit 1
 else
   echo "Sensor data for the past day at $(date) in ${OUTPUTFILE}"
-  echo "Sensor data file generated at $(date)" | mail -s "Sensor data for the past day" ${EMAIL_ADDRESS} --content-type="text/csv" --attach=${OUTPUTFILE}
+  echo "Sensor data file automatically generated at $(date).\nPlease note that data can use a different timezone\n" | mail -s "Sensor data for the past day" ${EMAIL_ADDRESS} --content-type="text/csv" --attach=${OUTPUTFILE}
 fi
