@@ -7,8 +7,22 @@ library(data.table)
 library(Hmisc)
 
 ###################
+# Constants
+###################
+
+measures <- c("rssi","temp","humidity","pm25", "pm10","no2a","no2b")
+LSB <- 0.0001875
+
+GGDFile <- "./GGD.csv"
+
+###################
 # Functions
 ###################
+
+alphaSenseNo2 <- function(OP1,OP2,WE_zero_total,Aux_zero_total,WE_sens_total){
+  
+  ((OP1*LSB - WE_zero_total) - (OP2*LSB - Aux_zero_total))/WE_sens_total
+}
 
 putMsg <- function(msg,major=FALSE,localStart=NULL){
   if (major){
@@ -63,13 +77,6 @@ if (length(args) == 0) {
 }else{
   stop(paste("Wrong number of arguments:",args), call.=FALSE)
 }
-
-###################
-# Constants
-###################
-
-measures <- c("rssi","temp","humidity","pm25", "pm10","no2a","no2b")
-
 
 if ( interactive == 'y' ){
   toFile <- readline(prompt="Output to file[y/N] ? ")
@@ -208,7 +215,7 @@ putMsg(sprintf("Time interval for plotting: from %s to %s",
                as.character(startDate,format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam"),
                as.character(endDate,format = "%d-%m-%Y %H:%M:%S", tz = "Europe/Amsterdam")))
 
-putMsg("Calculating sensor activity")
+putMsg("Calculating hourly sensor activity and no2 levels")
 
 ## create data structure to calculate quantities per hour
 
@@ -219,6 +226,8 @@ bins <- data.frame(tm=.POSIXct(character(len)),
                    integer(len),
                    integer(len),
                    integer(len),
+                   numeric(len),
+                   numeric(len),
                    stringsAsFactors = FALSE)
 
 
@@ -234,7 +243,10 @@ stopifnot( sum(s_fulldata) + sum (s_partialdata) + sum(s_startup) == nrow(sensor
 
 dataTypes <- c("Full data", "Partial data", "Startup")
 
-colnames(bins[3:5]) <- dataTypes
+names(bins)[3:5] <- dataTypes
+
+names(bins)[6] <- "no2a_mean"
+names(bins)[7] <- "no2b_mean"
 
 joint1 <- data.table(idsInRange)
 colnames(joint1) <- "id"
@@ -249,9 +261,12 @@ for (index in seq(1, len, by = nlevels(idsInRange))){
   joint3 <- data.table(sensorData[candidates&s_partialdata,lapply(.SD,length),by=id,.SDcols="id"],key="id")
   joint4 <- data.table(sensorData[candidates&s_startup,lapply(.SD,length),by=id,.SDcols="id"],key="id")
   
-  bins$tm[index:(index+nlevels(idsInRange)-1)] <- timeNow
-  bins[index:(index+nlevels(idsInRange)-1),2:ncol(bins)] <- joint2[joint3[joint4[joint1]]]
+  joint5 <- data.table(sensorData[candidates&s_fulldata,lapply(.SD,mean),by=id,.SDcols=c("no2a","no2b")],key="id")
   
+  
+  bins$tm[index:(index+nlevels(idsInRange)-1)] <- timeNow
+  bins[index:(index+nlevels(idsInRange)-1),2:ncol(bins)] <- joint2[joint3[joint4[joint5[joint1]]]]
+
   timeNow <- timeNow + 3600
 }
 
@@ -297,6 +312,71 @@ for (i in 1:length(dataTypes))
 }
 
 putMsg("Done generating activity graphs",major=TRUE,localStart = start_time)
+
+putMsg("Calculating NO2 concentration")
+
+calibrationData <- read.csv("./NO2_sensors.csv", header=TRUE, stringsAsFactors = FALSE)
+
+# Kit,id,ISB_serial_num,WE_zero_Electro,WE_zero_total,Aux_zero_Electro,Aux_zero_total,WE_sens_Electro,WE_sens_Total
+calibrationData <- data.table(calibrationData[,c("id","WE_zero_total","Aux_zero_total","WE_sens_total")])
+
+calibrationData$id <- as.factor(calibrationData$id)
+
+setkey(calibrationData,id)
+
+meansNO2 <- data.table(bins[,c("tm","id","no2a_mean","no2b_mean")],key="id")
+
+meansNO2 <- meansNO2[calibrationData]
+
+meansNO2$conc <- alphaSenseNo2(meansNO2$no2a_mean,meansNO2$no2b_mean,meansNO2$WE_zero_total,meansNO2$Aux_zero_total,meansNO2$WE_sens_total)
+
+meansNO2$tm <- format(meansNO2$tm, tz="Etc/GMT",usetz=TRUE)
+
+concCols <- c("tm","id","conc")
+
+write.csv(meansNO2[,concCols,with=FALSE],GGDFile,row.names = FALSE)
+
+putMsg("Done calculating NO2 concentration",major=TRUE,localStart = start_time)
+
+putMsg("Generating NO2 concentration graphs")
+
+for ( id_index in 1: nlevels(idsInRange) )
+{
+  
+  if ( perSensor == 'y' ){
+    ## select only a particular sensor
+    currentID <- levels(idsInRange)[id_index]
+    selectID <- (meansNO2$id == currentID)
+  }else{
+    currentID <- idsInRange
+    selectID <- meansNO2$id %in% idsInRange
+  }
+  if (sum(!is.na(meansNO2[selectID,"conc"])) == 0){
+    putMsg(paste("WARNING: No conc data for sensor id(s):",paste(currentID,sep="",collapse=",")))
+    next
+  }
+  if ( toFile != 'y' ){
+    readline(prompt=paste("Press enter to see no2 concentration for sensor: ",paste(currentID,sep="",collapse=","),sep=""))
+  }
+  
+  pl <- ggplot(data=meansNO2[selectID,], aes(x=tm, y=conc, group=id, colour=id)) + 
+    geom_line() +
+    xlab("Time") +
+    theme(axis.text.x = element_text(angle = -90, hjust = 1))
+  
+  print(pl)
+  
+  if ( perSensor != 'y' ){
+    ## we do not need to loop to plot separate sensors
+    break
+  }
+  
+}
+
+browser()
+
+putMsg("Done generating NO2 concentration graphs",major=TRUE,localStart = start_time)
+
 putMsg("Generating sensor measure graphs")
 
 
@@ -461,5 +541,6 @@ if ( toFile == 'y' ){
 }
 
 putMsg("Done generating sensor measure cross-correlation",major=TRUE,localStart = start_time)
+
 
 putMsg("Program done",major=TRUE,localStart = totalStart)
