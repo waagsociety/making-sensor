@@ -50,6 +50,14 @@ then
   SSH_PORT=2234
   APP_SERVER=sensor.waag.org:3000
   MQTT_AGENT_LOG='/home/stefano/making-sensor/screenlog.0'
+elif [ "${TARGET}" = "local" ]
+then
+  MY_HOST=192.168.56.101
+  SENSORPORT=80
+  MY_USER=vagrant
+  SSH_PORT=22
+  APP_SERVER=airq.local
+  MQTT_AGENT_LOG='/var/log/mosquitto-agent/mosquitto-agent.log'
 else
   echo "Unknown server: ${1}" | tee ${TMP_FILE}
   mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
@@ -183,15 +191,15 @@ else
   fi
 
 
-  ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} "grep -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsAirQ
-  if [ -f /tmp/oldErrorsAirQ ]
+  ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} "grep -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsAirQ.${TARGET}
+  if [ -f /tmp/oldErrorsAirQ.${TARGET} ]
   then
-    ERRORS="$(diff /tmp/newErrorsAirQ /tmp/oldErrorsAirQ)"
+    ERRORS="$(diff /tmp/newErrorsAirQ.${TARGET} /tmp/oldErrorsAirQ.${TARGET})"
   else
-    ERRORS="$(cat /tmp/newErrorsAirQ)"
+    ERRORS="$(cat /tmp/newErrorsAirQ.${TARGET})"
   fi
 
-  mv /tmp/newErrorsAirQ /tmp/oldErrorsAirQ
+  mv /tmp/newErrorsAirQ.${TARGET} /tmp/oldErrorsAirQ.${TARGET}
 
   if [ ! -z "${ERRORS}" ]
   then

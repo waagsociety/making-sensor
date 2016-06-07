@@ -167,6 +167,7 @@ while ! $byebye do
     rescue JSON::JSONError => e
       $stderr.puts "ERROR: while processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
       $stderr.puts "Save raw message with fake id"
+      msg_hash = {}
       msg_hash[:i] = -1
       msg_hash[:message] = msg
     end
@@ -178,18 +179,32 @@ while ! $byebye do
     begin
 
       parameters = nil
+      # check for overflow
 
-      if (! msg_hash[:i].nil?)
-        parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
-              msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
-      else
-        $stderr.puts "WARNING: Old format detected, translate to new format and save msg"
-        parameters = [msg_hash[:id], srv_ts, topic, msg_hash[:rssi], msg_hash[:temp], msg_hash[:pm10],
-              msg_hash["pm2.5".to_sym], msg_hash[:no2a], msg_hash[:no2b], nil, msg_hash[:message]]
+      if ( (! msg_hash["p2.5".to_sym].nil?) && msg_hash["p2.5".to_sym] == "ovf" )
+        msg_hash["p2.5".to_sym] = -1
+      end
+      if ( (! msg_hash[:pm10].nil?) && msg_hash[:p10] == "ovf" )
+        msg_hash[:p10] = -1
       end
 
+
+
+      if (! msg_hash[:id].nil?)
+        $stderr.puts "WARNING: Old format detected, translate to new format and save msg"
+        msg_hash[:i] = msg_hash[:id]
+      elsif (msg_hash[:i].nil?)
+        $stderr.puts "WARNING: msg with no id: #{msg}"
+        $stderr.puts "Save raw message with fake id"
+        msg_hash[:i] = -1
+        msg_hash[:message] = msg
+      end
+
+      parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
+            msg_hash["p2.5".to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
+
       res = db_conn.exec_prepared("sensordata",  parameters)
-      
+
     rescue PG::NotNullViolation => e
       $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
@@ -217,6 +232,7 @@ while ! $byebye do
 
   rescue Exception => e
     $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
     $stderr.puts "Sensor data: topic: #{topic}, msg: #{msg}, timestamp: #{srv_ts}, hash: #{msg_hash.to_s}"
 
     if $byebye
