@@ -373,8 +373,6 @@ for ( id_index in 1: nlevels(idsInRange) )
   
 }
 
-browser()
-
 putMsg("Done generating NO2 concentration graphs",major=TRUE,localStart = start_time)
 
 putMsg("Generating sensor measure graphs")
@@ -487,16 +485,20 @@ if( startCorrTime >= endCorrTime){
     timeNow <- timeNow + 60*TIMESLOT_MIN
   }
 
-
-  for (i in 1:length(measures)) {
+  ## add no2 diff for correlation
+  corr_data$no2diff <- corr_data$no2a - corr_data$no2b
+  
+  extMeasures <- c(measures,"no2diff")
+  
+  for (i in 1:length(extMeasures)) {
     
     ## Initialize matrix for every measure
-    corr_matrix <- rcorr(as.matrix(dcast(corr_data,tm~id,value.var=measures[i])[,2:(nlevels(idsInRange)+1)]),type = "pearson")
+    corr_matrix <- rcorr(as.matrix(dcast(corr_data,tm~id,value.var=extMeasures[i])[,2:(nlevels(idsInRange)+1)]),type = "pearson")
     
     notEnoughSamples <- which(corr_matrix$n < ACCEPTABLE_SAMPLE_NR & lower.tri(corr_matrix$n,diag=FALSE),arr.ind=TRUE)
 
     if( length(notEnoughSamples) > 0 ){
-      putMsg(paste("WARNING: Not enough samples for",measures[i],"for sensors:", 
+      putMsg(paste("WARNING: Not enough samples for",extMeasures[i],"for sensors:", 
                      paste(row.names(corr_matrix$r)[notEnoughSamples[,1]],
                            colnames(corr_matrix$r)[notEnoughSamples[,2]],sep=",")))
     }
@@ -504,7 +506,7 @@ if( startCorrTime >= endCorrTime){
     notEnoughConfidence <- which(corr_matrix$P > ACCEPTABLE_SE & lower.tri(corr_matrix$P,diag=FALSE),arr.ind=TRUE)
     
     if( length(notEnoughConfidence) > 0 ){
-      putMsg(paste("WARNING: Not enough confidence for",measures[i],"for sensors:", 
+      putMsg(paste("WARNING: Not enough confidence for",extMeasures[i],"for sensors:", 
                    paste(row.names(corr_matrix$P)[notEnoughConfidence[,1]],
                          colnames(corr_matrix$P)[notEnoughConfidence[,2]],sep=",")))
     }
@@ -522,13 +524,13 @@ if( startCorrTime >= endCorrTime){
     corr_toDisplay$value <- as.numeric(as.character(corr_toDisplay$value))
       
     if ( toFile != 'y' ){
-      readline(prompt=paste("Press enter to see correlation for ",measures[i]," for all sensors",sep=""))
+      readline(prompt=paste("Press enter to see correlation for ",extMeasures[i]," for all sensors",sep=""))
     }
     
     pl <- ggplot(data=corr_toDisplay, aes(x=variable, y=value, group=id,colour=id)) + 
       geom_line() +
       xlab("sensor nr") +
-      ylab(paste(measures[i],"correlation")) +
+      ylab(paste(extMeasures[i],"correlation")) +
       coord_cartesian(ylim = c(-1, 1)) 
     
     print(pl)
