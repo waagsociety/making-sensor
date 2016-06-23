@@ -4,7 +4,9 @@
 # General parameters
 ##########################
 
-THRESHOLD=15
+TIME_THRESHOLD=15
+DISK_THRESHOLD=50
+
 TMP_FILE=/tmp/airq
 EMAIL_ADDRESS=stefano@waag.org
 
@@ -116,6 +118,17 @@ else
   MY_KEY=$(find . -name airq_key)
   SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
+  DISK_LEVELS=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'df -h | tr -s " " | cut -d" " -f5 | /bin/grep -v "Use%" | tr -d "%" | tr "\n" " " ')
+
+  for i in ${DISK_LEVELS}
+  do
+    if (( $i > 80 ))
+    then
+      echo "ERROR disk usage above threshold ${DISK_THRESHOLD} on ${MY_HOST}: ${i}" | tee -a ${TMP_FILE}
+      PASSED=false
+    fi
+  done
+
   if which mosquitto_pub >/dev/null
   then
     ## Test mosquitto agent
@@ -155,23 +168,6 @@ else
   fi
 
 
-  ## Test traffic data
-
-  MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
-  if [ ! -z "${MY_TIME}" ]
-  then
-    echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
-    diff_min "${MY_TIME}"
-    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if (( ${ELAPSED_MIN} > ${THRESHOLD} ))
-    then
-      PASSED=false
-    fi
-  else
-    echo "ssh command for traffic data failed" | tee -a ${TMP_FILE}
-    PASSED=false
-  fi
-
   ## Test measures
 
   MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d airq -c \"SELECT max(srv_ts) from measures\" " ' 2>/dev/null)
@@ -181,7 +177,7 @@ else
     MY_TIME=$(echo ${MY_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
     diff_min "${MY_TIME}"
     echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if ((${ELAPSED_MIN} > ${THRESHOLD} ))
+    if ((${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
     then
       PASSED=false
     fi
