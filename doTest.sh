@@ -167,6 +167,22 @@ else
     PASSED=false
   fi
 
+  ## Test traffic data
+
+  MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
+  if [ ! -z "${MY_TIME}" ]
+  then
+    echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
+    diff_min "${MY_TIME}"
+    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    if (( ${ELAPSED_MIN} > ${THRESHOLD} ))
+    then
+      PASSED=false
+    fi
+  else
+    echo "ssh command for traffic data failed" | tee -a ${TMP_FILE}
+    PASSED=false
+  fi
 
   ## Test measures
 
