@@ -175,7 +175,7 @@ else
     echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
     diff_min "${MY_TIME}"
     echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if (( ${ELAPSED_MIN} > ${THRESHOLD} ))
+    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
     then
       PASSED=false
     fi
