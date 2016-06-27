@@ -12,6 +12,7 @@ library(Hmisc)
 
 measures <- c("rssi","temp","humidity","pm25", "pm10","no2a","no2b")
 LSB <- 0.0001875
+FontSize <- 7
 
 GGDFile <- "./GGD.csv"
 
@@ -297,7 +298,7 @@ for (i in 1:length(dataTypes))
       geom_line() +
       xlab("Time") +
       ylab(paste("Nr of",dataTypes[i],"sensor msg")) +
-      theme(axis.text.x = element_text(angle = -90, hjust = 1)) +
+      theme(text = element_text(size=FontSize),axis.text.x = element_text(angle = -90, hjust = 1)) +
       scale_x_datetime(breaks = date_breaks("1 hour"))
     
     print(pl)
@@ -362,7 +363,7 @@ for ( id_index in 1: nlevels(idsInRange) )
   pl <- ggplot(data=meansNO2[selectID,], aes(x=tm, y=conc, group=id, colour=id)) + 
     geom_line() +
     xlab("Time") +
-    theme(axis.text.x = element_text(angle = -90, hjust = 1))
+    theme(text = element_text(size=FontSize),axis.text.x = element_text(angle = -90, hjust = 1))
   
   print(pl)
   
@@ -412,7 +413,7 @@ for (i in 1:length(measures))
     pl <- ggplot(data=validData[selectID,], aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
       geom_line() +
       xlab("Time") +
-      theme(axis.text.x = element_text(angle = -90, hjust = 1))
+      theme(text = element_text(size=FontSize),axis.text.x = element_text(angle = -90, hjust = 1))
       
     print(pl)
     
