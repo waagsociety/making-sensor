@@ -169,7 +169,8 @@ else
 
   ## Test traffic data
 
-  MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
+  #MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
+  MY_TIME=$(ssh ${SSH_OPTS} -p 2234 -i ${MY_KEY} stefano@wg66.waag.org 'sudo su postgres -c "psql -t -A -d traffic -c \"SELECT max(timestmp) from traveltime\" " ' 2>/dev/null)
   if [ ! -z "${MY_TIME}" ]
   then
     echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
