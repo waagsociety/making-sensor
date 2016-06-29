@@ -6,7 +6,7 @@
 
 TIME_THRESHOLD=15
 DISK_THRESHOLD=50
-LOAD_THRESHOLD=1,5
+LOAD_THRESHOLD=1.5
 
 TMP_FILE=/tmp/airq
 EMAIL_ADDRESS=stefano@waag.org
@@ -130,9 +130,9 @@ else
     fi
   done
 
-  LOAD_LEVEL=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'cat /proc/loadavg | cut -d" " -f1 | tr "." "," ')
+  LOAD_LEVEL=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'cat /proc/loadavg | cut -d" " -f1 ')
 
-  if (( ${LOAD_LEVEL} > ${LOAD_THRESHOLD} ))
+  if (( $(echo "${LOAD_LEVEL} > ${LOAD_THRESHOLD}" | bc -l) ))
   then
     echo "ERROR load above threshold ${LOAD_THRESHOLD} on ${MY_HOST}: ${LOAD_LEVEL}" | tee -a ${TMP_FILE}
     PASSED=false
