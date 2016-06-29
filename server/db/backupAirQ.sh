@@ -17,12 +17,14 @@ fi
 
 if [ "${TARGET} " == "AWS " ]
 then
+  DBs=( "airq" )
   BACKUPDIR=/opt/airqbk_aws
   PORT=22
   USER=ubuntu
   HOST=${AWS_HOST}
 elif [ "${TARGET} " == "WAAG " ]
 then
+  DBs=( "traffic" )
   BACKUPDIR=/opt/airqbk_waag
   PORT=2234
   USER=stefano
@@ -34,7 +36,6 @@ fi
 
 SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
-DBs=( "airq" "traffic" )
 SUFFIX="$(/bin/date +%H_%w).gz"
 
 for (( i=0; i<${#DBs[@]}; i++ ))
