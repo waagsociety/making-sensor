@@ -25,7 +25,7 @@ class AirqApp < Sinatra::Base
     #WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM measures GROUP BY id) SELECT * from measures m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS
 
     res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['airqdb']['measurestable']} WHERE temp IS NOT NULL GROUP BY id) " +
-      "SELECT * from  #{ms_conf['airqdb']['measurestable']} m, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS")
+      "SELECT * from  #{ms_conf['airqdb']['measurestable']} m, #{ms_conf['airqdb']['sensornames']} s, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS AND s.id=m.id")
     conn.close()
     puts "status " + res.cmd_status().to_s
     puts "tuples " + res.ntuples().to_s
@@ -35,6 +35,7 @@ class AirqApp < Sinatra::Base
         #id,tmstp,rssi,temp,pm10,pm25,no2a,no2b,humidity,lat,lon
         msg = {
           :id => tuple["id"],
+          :sensorname => tuple["sensorname"],
           :srv_ts => tuple["srv_ts"],
           :rssi => tuple["rssi"],
           :temp => tuple["temp"],

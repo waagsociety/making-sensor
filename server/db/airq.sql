@@ -14,7 +14,7 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 
 
-CREATE SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS public;
 
 ALTER SCHEMA public OWNER TO postgres;
 
@@ -36,9 +36,21 @@ REVOKE ALL ON SCHEMA public FROM postgres;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
-CREATE ROLE airqagent LOGIN
-  ENCRYPTED PASSWORD 'md5bb10ec1348e0952788b8c2a169735bd3'
-  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+DO
+$body$
+BEGIN
+   IF NOT EXISTS (
+      SELECT *
+      FROM   pg_catalog.pg_user
+      WHERE  usename = 'airqagent') THEN
+
+      CREATE ROLE airqagent LOGIN
+        ENCRYPTED PASSWORD 'md5bb10ec1348e0952788b8c2a169735bd3'
+        NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+   END IF;
+END
+$body$;
 
 
 CREATE DATABASE airq
@@ -51,7 +63,7 @@ CREATE DATABASE airq
 
 \connect airq
 
-CREATE TABLE measures
+CREATE TABLE IF NOT EXISTS measures
 (
   id bigint NOT NULL DEFAULT (-1),
   srv_ts timestamp with time zone NOT NULL,
@@ -72,10 +84,53 @@ WITH (
 ALTER TABLE measures
   OWNER TO airqagent;
 
+DROP TABLE IF EXISTS sensornames;
 
-CREATE ROLE trafficagent LOGIN
-  ENCRYPTED PASSWORD 'md5d76679c3f866741317ca56016448d19a'
-  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+CREATE TABLE sensornames
+(
+  id bigint NOT NULL DEFAULT (-1),
+  sensorname text,
+  CONSTRAINT sensornames_id PRIMARY KEY (id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE sensornames
+  OWNER TO airqagent;
+
+INSERT INTO sensornames (id, sensorname) VALUES (26296, 'Ria tuin');
+INSERT INTO sensornames (id, sensorname) VALUES (53788, 'Raymond');
+INSERT INTO sensornames (id, sensorname) VALUES (54200, 'Jet');
+INSERT INTO sensornames (id, sensorname) VALUES (54911, 'Maarten achter');
+INSERT INTO sensornames (id, sensorname) VALUES (55300, 'Maarten voor');
+INSERT INTO sensornames (id, sensorname) VALUES (55303, 'GGD');
+INSERT INTO sensornames (id, sensorname) VALUES (717780, 'Paul');
+INSERT INTO sensornames (id, sensorname) VALUES (1183931, 'Pinto');
+INSERT INTO sensornames (id, sensorname) VALUES (1184206, 'Clif');
+INSERT INTO sensornames (id, sensorname) VALUES (1184453, 'Puffi');
+INSERT INTO sensornames (id, sensorname) VALUES (1184527, 'Ria voor');
+INSERT INTO sensornames (id, sensorname) VALUES (1184739, 'Gerrie');
+INSERT INTO sensornames (id, sensorname) VALUES (1184838, 'Pieter');
+INSERT INTO sensornames (id, sensorname) VALUES (1185325, 'Frenk');
+INSERT INTO sensornames (id, sensorname) VALUES (13905017, 'Waag');
+INSERT INTO sensornames (id, sensorname) VALUES (14560051, 'Cuneke');
+
+
+DO
+$body$
+BEGIN
+   IF NOT EXISTS (
+      SELECT *
+      FROM   pg_catalog.pg_user
+      WHERE  usename = 'trafficagent') THEN
+
+      CREATE ROLE trafficagent LOGIN
+        ENCRYPTED PASSWORD 'md5d76679c3f866741317ca56016448d19a'
+        NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+
+   END IF;
+END
+$body$;
 
 
 CREATE DATABASE traffic
@@ -88,10 +143,10 @@ CREATE DATABASE traffic
 
 \connect traffic
 
-CREATE EXTENSION postgis;
-CREATE EXTENSION postgis_topology;
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis_topology;
 
-CREATE TABLE traveltime
+CREATE TABLE IF NOT EXISTS traveltime
 (
   id character varying(100) NOT NULL,
   name character varying(100) NOT NULL,
