@@ -6,6 +6,7 @@
 
 TIME_THRESHOLD=15
 DISK_THRESHOLD=50
+LOAD_THRESHOLD=1.5
 
 TMP_FILE=/tmp/airq
 EMAIL_ADDRESS=stefano@waag.org
@@ -122,12 +123,21 @@ else
 
   for i in ${DISK_LEVELS}
   do
-    if (( $i > 80 ))
+    if (( $i > ${DISK_THRESHOLD} ))
     then
       echo "ERROR disk usage above threshold ${DISK_THRESHOLD} on ${MY_HOST}: ${i}" | tee -a ${TMP_FILE}
       PASSED=false
     fi
   done
+
+  LOAD_LEVEL=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'cat /proc/loadavg | cut -d" " -f1 | tr "." "," ')
+
+  if (( ${LOAD_LEVEL} > ${LOAD_THRESHOLD} ))
+  then
+    echo "ERROR load above threshold ${LOAD_THRESHOLD} on ${MY_HOST}: ${LOAD_LEVEL}" | tee -a ${TMP_FILE}
+    PASSED=false
+  fi
+
 
   if which mosquitto_pub >/dev/null
   then
