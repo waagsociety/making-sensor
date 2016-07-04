@@ -7,7 +7,7 @@ fi
 
 STR_FROMTIME=$(echo ${FROM_TIME} | tr '-' '_' | tr ' ' '_' | tr ':' '_' | tr '+' '_')
 
-cat <<THISISTHEEND
+echo "
 CREATE TABLE traveltime_${STR_FROMTIME}
 (
   id character varying(100) NOT NULL,
@@ -35,4 +35,4 @@ WITH moved_rows AS (
 )
 INSERT INTO traveltime_${STR_FROMTIME}
 SELECT * FROM moved_rows;
-THISISTHEEND
+" | sudo su postgres -c 'psql traffic'
