@@ -431,9 +431,9 @@ ruby:
             bundler: '1'
             version: 2.1.5
             gems:
-                - deep_merge
-                - activesupport
-                - vine
+                - deep_merge@1.0.1
+                - activesupport@4.2.6
+                - vine@0.2
 #                - sinatra
 #                - sinatra-contrib
 #                - faraday
