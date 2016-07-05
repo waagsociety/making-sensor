@@ -32,8 +32,11 @@ class AirqApp < Sinatra::Base
     res= conn.exec("WITH averages AS " +
       "(SELECT id, max(srv_ts) AS srv_ts, avg(rssi) AS rssi, avg(temp) AS temp, avg(pm10) AS pm10, " +
       "avg(pm25) AS pm25, avg(no2a) AS no2a, avg(no2b) AS no2b, avg(humidity) AS humidity " +
-      "FROM #{ms_conf['airqdb']['measurestable']} WHERE srv_ts > '#{start_ts}' AND srv_ts <= '#{end_ts}' AND temp IS NOT NULL GROUP BY id) " +
-      "SELECT * FROM averages a, #{ms_conf['airqdb']['sensorparameters']} s WHERE a.id = s.id")
+      "FROM #{ms_conf['airqdb']['measurestable']} WHERE srv_ts > '#{start_ts}' AND srv_ts <= '#{end_ts}' AND temp IS NOT NULL GROUP BY id), " +
+      "latest_measures AS " +
+      "(SELECT id, max(srv_ts) AS srv_ts FROM #{ms_conf['airqdb']['measurestable']} WHERE temp IS NOT NULL GROUP BY id)" +
+      " SELECT l.srv_ts AS srv_ts, a.rssi AS rssi, a.temp AS temp, a.pm10 AS pm10, a.pm25 AS pm25, a.no2a AS no2a, a.no2b AS no2b, a.humidity AS humidity, s.* " +
+      "FROM #{ms_conf['airqdb']['sensorparameters']} s,  averages a RIGHT JOIN latest_measures l ON l.id = a.id WHERE l.id = s.id")
 
     # res= conn.exec("WITH latest_measures AS (SELECT id AS theID, max(srv_ts) AS theTS FROM  #{ms_conf['airqdb']['measurestable']} WHERE temp IS NOT NULL GROUP BY id) " +
     #   "SELECT * from  #{ms_conf['airqdb']['measurestable']} m, #{ms_conf['airqdb']['sensorparameters']} s, latest_measures l WHERE m.id=l.theID AND  m.srv_ts=l.theTS AND s.id=m.id")
