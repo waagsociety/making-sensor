@@ -44,6 +44,6 @@ cd ${REP}
 sudo git checkout-index -a -f --prefix=${DEST_DIR}/
 cd ..
 
-sudo chown -R www-data:www-data /var/www/airq
+sudo chown -R www-data:www-data ${DEST_DIR}
 
 sudo service nginx restart
