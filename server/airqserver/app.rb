@@ -52,7 +52,7 @@ class AirqApp < Sinatra::Base
         humidity_calc = tuple["humidity"].to_f.round(2)
         pm10_calc = (tuple["pm10_offset"].to_f + tuple["pm10_pm10_coeff"].to_f * tuple["pm10"].to_f + tuple["pm10_pm25_coeff"].to_f * tuple["pm25"].to_f + tuple["pm10_t_coeff"].to_f * tuple["temp"].to_f + tuple["pm10_rh_coeff"].to_f * tuple["humidity"].to_f).round(2)
         pm25_calc = (tuple["pm25_offset"].to_f + tuple["pm25_pm25_coeff"].to_f * tuple["pm25"].to_f + tuple["pm25_pm10_coeff"].to_f * tuple["pm10"].to_f + tuple["pm25_t_coeff"].to_f * tuple["temp"].to_f + tuple["pm25_rh_coeff"].to_f * tuple["humidity"].to_f).round(2)
-        no2_calc = (tuple["no2_offset numeric"].to_f + tuple["no2_no2a_coeff"].to_f * tuple["no2a"].to_f + tuple["no2_no2b_coeff"].to_f * tuple["no2a"].to_f + tuple["no2_t_coeff"].to_f * tuple["temp"].to_f + tuple["no2_rh_coeff"].to_f * tuple["humidity"].to_f).round(2)
+        no2_calc = (tuple["no2_offset numeric"].to_f + tuple["no2_no2a_coeff"].to_f * tuple["no2a"].to_f + tuple["no2_no2b_coeff"].to_f * tuple["no2b"].to_f + tuple["no2_t_coeff"].to_f * tuple["temp"].to_f + tuple["no2_rh_coeff"].to_f * tuple["humidity"].to_f).round(2)
 
         msg = {
           :id => tuple["id"],
