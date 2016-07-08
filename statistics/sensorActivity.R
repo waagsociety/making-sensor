@@ -73,6 +73,24 @@ limitOutOfRangeData <- function(data,column){
 # Inputs parameters
 ###################
 
+## reset parameters
+if (exists("startDate")){
+  rm("startDate")
+}
+if (exists("endDate")){
+  rm("endDate")
+}
+if (exists("outputdir")){
+  rm("outputdir")
+}
+if (exists("perSensor")){
+  rm("perSensor")
+}
+if (exists("isInteractive")){
+  rm("isInteractive")
+}
+
+
 args = commandArgs(trailingOnly=TRUE)
 
 if (length(args) == 0) {
@@ -80,33 +98,28 @@ if (length(args) == 0) {
   if( !interactive()){
     stop("This is not an interactive session",call.=FALSE)
   }
-  if (exists("startDate")){
-    rm("startDate")
-  }
-  if (exists("endDate")){
-    rm("endDate")
-  }
-  interactive <- 'y'
-
-} else if (length(args)==3) {
-  # default output file
+  isInteractive <- 'y'
+} else if (length(args)==4) {
+  isInteractive <- 'n' 
+  # default output to file
   startDate <- args[1]
   endDate <- args[2]
-  interactive <- args[3]
+  perSensor <- args[3]
+  outputdir <- args[4]
 }else{
   stop(paste("Wrong number of arguments:",args), call.=FALSE)
 }
 
-if ( interactive == 'y' ){
-  toFile <- readline(prompt="Output to file[y/N] ? ")
-}else{
+if ( isInteractive == 'y' ){
+  toFile <- readline(prompt="Output to file[Y/n] ? ")
+}
+
+if (toFile == '' ){
   toFile <- 'y'  
 }
 
-if ( interactive == 'y' ){
+if ( isInteractive == 'y' ){
   perSensor <- readline(prompt="Separate sensors [y/N] ? ")
-}else{
-  perSensor <- 'n'  
 }
 
 ## Read date range for graphics
@@ -218,15 +231,28 @@ if( is.na(endDate)){
   endDate <- max(all$corr_ts)
 }
 
+#######################################################
+## Date range is known, generate filename
+#######################################################
+
 ## Open file if writing to file
 if ( toFile == 'y' ){
+  if (!exists("outputdir")) {
+    outputdir <- "/Users/SB/Downloads/"
+    
+  }
+  
   title <- paste("Report at ", Sys.time(),  sprintf(" from %s to %s",
                                                     as.character(startDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam"),
                                                     as.character(endDate,format = "%d-%m-%Y", tz = "Europe/Amsterdam")),".pdf", sep="")
-  title <- gsub(":","_",title)
-  dir <- "/Users/SB/Downloads/"
-  pdf(file=paste(dir,title,sep=""),title=title,paper="a4r",width=14)
+  outputfile <- paste(outputdir,gsub(":","_",title),sep="")
+  
+  pdf(file=outputfile,title=title,paper="a4r",width=14)
 }
+
+#######################################################
+## Reshape data
+#######################################################
 
 ## remove unnecessary columns and create data table
 sensorData <- data.table(all[c("id","corr_ts","message", measures)],key="id")
