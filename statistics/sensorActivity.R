@@ -55,14 +55,14 @@ limitOutOfRangeData <- function(data,column){
   outliers <- (data[,column,with=FALSE] < (center - extent))[,1]
   
   if( sum(outliers) > 0){
-    putMsg(paste("WARNING:", sum(outliers)/nrow(data),"% values lowen than", center,"-",extent,"for measure",column))
+    putMsg(paste("WARNING:", round(sum(outliers)/nrow(data)*100,digits=3),"% values lowen than", center,"-",extent,"for measure",column))
     # data[outliers,column := center-extent, with=FALSE]
   }
   
   outliers <- (data[,column,with=FALSE] > (center + extent))[,1]
   
   if( sum(outliers) > 0){
-    putMsg(paste("WARNING:", sum(outliers)/nrow(data),"% values higher than", center,"+", extent,"for measure",column))
+    putMsg(paste("WARNING:", round(sum(outliers)/nrow(data)*100,digits=3),"% values higher than", center,"+", extent,"for measure",column))
     # data[outliers,column := center + extent, with=FALSE]
   }
 
@@ -424,22 +424,22 @@ putMsg("Generating sensor measure graphs")
 
 validData <- sensorData[!s_startup,]
 
-for ( id_index in 1: nlevels(idsInRange) )
+for (i in 1:length(measures))
 {
   
-  if ( perSensor == 'y' ){
-    ## select only a particular sensor
-    currentID <- levels(idsInRange)[id_index]
-    selectID <- (inRangeData$id == currentID)
-  }else{
-    currentID <- idsInRange
-    selectID <- inRangeData$id %in% idsInRange
-  }
+  inRangeData <- limitOutOfRangeData(validData,measures[i])
   
-  for (i in 1:length(measures))
+  for ( id_index in 1: nlevels(idsInRange) )
   {
-  
-    inRangeData <- limitOutOfRangeData(validData,measures[i])
+    
+    if ( perSensor == 'y' ){
+      ## select only a particular sensor
+      currentID <- levels(idsInRange)[id_index]
+      selectID <- (inRangeData$id == currentID)
+    }else{
+      currentID <- idsInRange
+      selectID <- inRangeData$id %in% idsInRange
+    }
   
 #   if (length(outIds) > 0){
 #     putMsg(paste("SKIPPING: Out of range sensor ids:",paste(outIds,sep="",collapse=","),"for measure",measures[i]))
@@ -461,10 +461,10 @@ for ( id_index in 1: nlevels(idsInRange) )
       
     print(pl)
     
-  }
-  if ( perSensor != 'y' ){
-    ## we do not need to loop to plot separate sensors
-    break
+    if ( perSensor != 'y' ){
+      ## we do not need to loop to plot separate sensors
+      break
+    }
   }
 }
 
