@@ -8,6 +8,8 @@ TIME_THRESHOLD=10
 DISK_THRESHOLD=50
 LOAD_THRESHOLD=1.5
 
+TIME_NOTICE=60
+
 TMP_FILE=/tmp/airq
 EMAIL_ADDRESS=stefano@waag.org
 
@@ -104,7 +106,7 @@ then
   clear
 fi
 
-echo "Test start at $(date) for ${TARGET}, time threshold is ${TIME_THRESHOLD} min" | tee ${TMP_FILE}
+echo "Test start at $(date) for ${TARGET}, time threshold is ${TIME_THRESHOLD} min, notice time is ${TIME_NOTICE} min" | tee ${TMP_FILE}
 
 PASSED=true
 
@@ -186,7 +188,7 @@ else
     echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
     diff_min "${MY_TIME}"
     echo "Traffic data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
+    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
     then
       PASSED=false
     fi
@@ -210,7 +212,7 @@ else
       ID_TIME=$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
       diff_min "${ID_TIME}"
       # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-      if ((${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
+      if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
       then
         echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
         PASSED=false
