@@ -4,7 +4,7 @@
 # General parameters
 ##########################
 
-TIME_THRESHOLD=15
+TIME_THRESHOLD=10
 DISK_THRESHOLD=50
 LOAD_THRESHOLD=1.5
 
@@ -104,7 +104,7 @@ then
   clear
 fi
 
-echo "Test start at $(date) for ${TARGET}" | tee ${TMP_FILE}
+echo "Test start at $(date) for ${TARGET}, time threshold is ${TIME_THRESHOLD} min" | tee ${TMP_FILE}
 
 PASSED=true
 
@@ -185,7 +185,7 @@ else
   then
     echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
     diff_min "${MY_TIME}"
-    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    echo "Traffic data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
     if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
     then
       PASSED=false
@@ -197,17 +197,26 @@ else
 
   ## Test measures
 
-  MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d airq -c \"SELECT max(srv_ts) from measures\" " ' 2>/dev/null)
+  MY_TIME=$(ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d airq -c \"SELECT id, max(srv_ts) from measures where id > 100 group by id\" " ' 2>/dev/null)
+  # echo "ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
   if [ ! -z "${MY_TIME}" ]
   then
-    echo "Most recent sensor data: ${MY_TIME}" | tee -a ${TMP_FILE}
-    MY_TIME=$(echo ${MY_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
-    diff_min "${MY_TIME}"
-    echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if ((${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
-    then
-      PASSED=false
-    fi
+    export IFS=$'\n'
+    for i in $(echo ${MY_TIME} | sed 's/+00 /+00@/g' | tr '@' '\n');
+    do
+      ID=$(echo ${i}|cut -d'|' -f1);
+      ID_TIME=$(echo ${i}|cut -d'|' -f2);
+      # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
+      ID_TIME=$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
+      diff_min "${ID_TIME}"
+      # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+      if ((${ELAPSED_MIN} > ${TIME_THRESHOLD} ))
+      then
+        echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
+        PASSED=false
+      fi
+    done
+
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
