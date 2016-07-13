@@ -112,6 +112,8 @@ if (length(args) == 0) {
 
 if ( isInteractive == 'y' ){
   toFile <- readline(prompt="Output to file[Y/n] ? ")
+}else{
+  toFile <- ''
 }
 
 if (toFile == '' ){
