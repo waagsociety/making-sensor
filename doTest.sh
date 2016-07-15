@@ -4,7 +4,7 @@
 # General parameters
 ##########################
 
-TIME_THRESHOLD=10
+TIME_THRESHOLD=20
 DISK_THRESHOLD=50
 LOAD_THRESHOLD=1.5
 
