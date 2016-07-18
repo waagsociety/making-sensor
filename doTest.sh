@@ -89,16 +89,16 @@ parse_yaml() {
 
 diff_min(){
   local DATA_TIME="${1}00"
+
   if date -j >/dev/null 2>&1
   then
     local DATA_S_TIME=$(date -j -f "%Y-%m-%d %H:%M:%S%z" "${DATA_TIME}" "+%s")
-    ELAPSED_MIN=$(date -r $(($(date "+%s") - ${DATA_S_TIME})) "+%-M")
   else
     local DATA_S_TIME=$(date -d "${DATA_TIME}" "+%s")
-    local NOW=$(date +%s)
-    ELAPSED_MIN=$(( (${NOW}-${DATA_S_TIME}) / 60 ))
   fi
 
+  local NOW=$(date +%s)
+  ELAPSED_MIN=$(( (${NOW}-${DATA_S_TIME}) / 60 ))
 }
 
 if [ ! -z ${TERM} ]
@@ -109,6 +109,7 @@ fi
 echo "Test start at $(date) for ${TARGET}, time threshold is ${TIME_THRESHOLD} min, notice time is ${TIME_NOTICE} min" | tee ${TMP_FILE}
 
 PASSED=true
+ISSENSOR=false
 
 if ! curl --max-time 15 ${MY_HOST} &> /dev/null
 then
@@ -203,6 +204,7 @@ else
   # echo "ssh ${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
   if [ ! -z "${MY_TIME}" ]
   then
+    #echo ${MY_TIME}
     export IFS=$'\n'
     for i in $(echo ${MY_TIME} | sed 's/+00 /+00@/g' | tr '@' '\n');
     do
@@ -216,6 +218,7 @@ else
       then
         echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
         PASSED=false
+        ISSENSOR=true
       fi
     done
 
@@ -265,8 +268,14 @@ fi
 if [ ! "$PASSED" = "true" ]
 then
   echo "Test NOT passed" | tee -a ${TMP_FILE}
-  mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
-  #osascript -e 'tell app "System Events" to display dialog "AIRQ Test NOT passed!!"'
+  if [ "$ISSENSOR" = "true" ]
+  then
+    mail -s "AIRQ sensors NOT active" ${EMAIL_ADDRESS} < ${TMP_FILE}
+    #osascript -e 'tell app "System Events" to display dialog "AIRQ Test NOT passed!!"'
+  else
+    mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+  fi
+
 else
   echo "Test passed" | tee -a ${TMP_FILE}
 fi
