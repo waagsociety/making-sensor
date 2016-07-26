@@ -4,11 +4,12 @@
 # General parameters
 ##########################
 
-TIME_THRESHOLD=20
+TIME_THRESHOLD=30
+TRAFFIC_TIME_THRESHOLD=10
 DISK_THRESHOLD=50
 LOAD_THRESHOLD=1.5
 
-TIME_NOTICE=60
+TIME_NOTICE=120
 
 TMP_FILE=/tmp/airq
 EMAIL_ADDRESS=stefano@waag.org
@@ -106,7 +107,7 @@ then
   clear
 fi
 
-echo "Test start at $(date) for ${TARGET}, time threshold is ${TIME_THRESHOLD} min, notice time is ${TIME_NOTICE} min" | tee ${TMP_FILE}
+echo "Test start at $(date) for ${TARGET}, time threshold for sensor data is ${TIME_THRESHOLD} min, notice time is ${TIME_NOTICE} min" | tee ${TMP_FILE}
 
 PASSED=true
 ISSENSOR=false
@@ -189,7 +190,7 @@ else
     echo "Most recent traffic data: ${MY_TIME}" | tee -a ${TMP_FILE}
     diff_min "${MY_TIME}"
     echo "Traffic data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
+    if (( ${ELAPSED_MIN} > ${TRAFFIC_TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
     then
       PASSED=false
     fi
