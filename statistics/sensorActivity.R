@@ -269,6 +269,10 @@ idsInRange <- sensorData[,id,by = id]$id
 
 putMsg(paste("Available sensor ids:",paste(idsInRange,sep="",collapse=",")))
 
+if (sum(sensorparameters$id %in% idsInRange)>0){
+  putMsg(paste("WARNING: No data for sensor id(s):",paste(sensorparameters$id[!sensorparameters$id %in% idsInRange],sep="",collapse=",")))
+}
+
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
 
 putMsg(paste("Done calculating time frame, hours: ",hours),major=TRUE,localStart = start_time)
@@ -340,6 +344,21 @@ for (index in seq(1, len, by = nlevels(idsInRange))){
 bins[is.na(bins)] <- 0
 
 putMsg("Done calculating sensor activity",major=TRUE,localStart = start_time)
+
+missmsg_threshold <- 30
+putMsg(paste("Generating list of sensors below message threshold of",missmsg_threshold))
+
+tmp_dt <- data.table(
+        bins[abs(bins[,"Full data"]-60) > missmsg_threshold,
+        c("tm","id")],key = "id"
+      )[,round(.N/as.integer(hours)*100,digits=0),id]
+
+colnames(tmp_dt) <- c("id","%")
+
+print(tmp_dt)
+
+putMsg("Done generating list of sensors below message threshold",major=TRUE,localStart = start_time)
+
 putMsg("Generating activity graphs")
 
 for ( id_index in 1: nlevels(idsInRange) )
