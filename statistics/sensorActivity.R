@@ -14,6 +14,9 @@ measures <- c("rssi","temp","humidity","pm25", "pm10","no2a","no2b")
 LSB <- 0.0001875
 FontSize <- 7
 
+plotSlots <- c(1,2,3,6,12,24)
+plotSlotsLimit <- 100
+
 GGDFile <- "./GGD.csv"
 AlphaSensefile <- "./NO2_AlphaSenseparameters.csv"
 
@@ -190,7 +193,7 @@ if(is.na(endDate)  && is.na(startDate) ){
 
 ## Read data from tunnel to server
 query <- paste("select * from measures where id > 100",whereCondition)
-psql_command <- "PGPASSWORD=postgres psql -h localhost -p 9730 -U postgres -d airq"
+psql_command <- "PGPASSWORD=postgres psql -h localhost -p 9330 -U postgres -d airq"
 
 command <- paste(psql_command," -A -F',' -c \"", query, "\" | grep -v 'rows)' > ./all.csv", sep="")
 system(command)
@@ -269,11 +272,14 @@ idsInRange <- sensorData[,id,by = id]$id
 
 putMsg(paste("Available sensor ids:",paste(idsInRange,sep="",collapse=",")))
 
-if (sum(sensorparameters$id %in% idsInRange)>0){
+if (sum(!sensorparameters$id %in% idsInRange)>0){
   putMsg(paste("WARNING: No data for sensor id(s):",paste(sensorparameters$id[!sensorparameters$id %in% idsInRange],sep="",collapse=",")))
 }
 
 hours <- floor(difftime(endDate,startDate,units="hours")) + 1
+
+# calculate time interval for plots
+timeInterval <- plotSlots[min(which(hours/plotSlots < plotSlotsLimit))]
 
 putMsg(paste("Done calculating time frame, hours: ",hours),major=TRUE,localStart = start_time)
 putMsg(sprintf("Time interval for plotting: from %s to %s",
@@ -385,7 +391,7 @@ for ( id_index in 1: nlevels(idsInRange) )
       xlab("Time") +
       ylab(paste("Nr of",dataTypes[i],"sensor msg")) +
       theme(axis.text.x = element_text(size=FontSize,angle = -90, hjust = 1)) +
-      scale_x_datetime(breaks = date_breaks("1 hour"))
+      scale_x_datetime(breaks = date_breaks(paste(timeInterval,"hour")))
     
     print(pl)
     
@@ -417,6 +423,7 @@ calcConc$knmi_pm25conc <- linearmodel(calcConc$pm25_mean,calcConc$pm10_mean,calc
 calcConc$knmi_pm10conc <- linearmodel(calcConc$pm10_mean,calcConc$pm25_mean,calcConc$temp_mean,calcConc$rh_mean,
                            calcConc$pm10_offset,calcConc$pm10_pm10_coeff,calcConc$pm10_pm25_coeff,calcConc$pm10_t_coeff,calcConc$pm10_rh_coeff)
 
+calcConc$tm_pox <- calcConc$tm
 calcConc$tm <- format(calcConc$tm, tz="Etc/GMT-1",usetz=FALSE)
 
 concCols <- c("tm","id","alpha_no2conc","knmi_no2conc","knmi_pm25conc","knmi_pm10conc","temp_mean","rh_mean")
@@ -449,10 +456,11 @@ for ( id_index in 1: nlevels(idsInRange) )
       readline(prompt=paste("Press enter to see ",concCols[i]," concentration for sensor: ",paste(currentID,sep="",collapse=","),sep=""))
     }
     
-    pl <- ggplot(data=calcConc[selectID,], aes_string(x="tm", y=concCols[i], group="id", colour="id")) + 
+    pl <- ggplot(data=calcConc[selectID,], aes_string(x="tm_pox", y=concCols[i], group="id", colour="id")) + 
       geom_line() +
       xlab("Time") +
-      theme(axis.text.x = element_text(size=FontSize,angle = -90, hjust = 1))
+      theme(axis.text.x = element_text(size=FontSize,angle = -90, hjust = 1)) +
+      scale_x_datetime(breaks = date_breaks(paste(timeInterval,"hour")))
     
     print(pl)
   }
@@ -504,7 +512,8 @@ for (i in 1:length(measures))
     pl <- ggplot(data=inRangeData[selectID,], aes_string(x="corr_ts", y=measures[i], group="id", colour="id")) + 
       geom_line() +
       xlab("Time") +
-      theme(axis.text.x = element_text(size=FontSize,angle = -90, hjust = 1))
+      theme(axis.text.x = element_text(size=FontSize,angle = -90, hjust = 1)) +
+      scale_x_datetime(breaks = date_breaks(paste(timeInterval,"hour")))
       
     print(pl)
     
