@@ -5,27 +5,21 @@
 // author: Dave Gonner & Emma Pareschi
 // version 4 May 2016
 
-#include <Wire.h>u
+#include <Wire.h>
 #include <Adafruit_ADS1015.h>
-#include <OneWire.h>
-//#include <DallasTemperature.h>
 #include "DHT.h"
 
-#define ONE_WIRE_BUS 2      // Data wire is plugged into pin 2 on the Arduino
 #define LOG_INTERVAL  925  // mills between entries (reduce to take more/faster data)
 
-// Setup a oneWire instance to communicate with any OneWire devices 
-// (not just Maxim/Dallas temperature ICs)
-//OneWire oneWire(ONE_WIRE_BUS);
-// Pass our oneWire reference to Dallas Temperature.
-//DallasTemperature tempSensor(&oneWire);
 
+//---------------------------
+// VOOR TEMP & HUM sensor DHT22
 #define DHTPIN A1
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 
 DHT dht(DHTPIN, DHTTYPE);
 
-
+//---------------------------
 // VOOR DE ADC
 
 // Averagigng period:
@@ -39,16 +33,9 @@ int  iptr = 0;                          // iptr is the pointer to the table hold
 
 int16_t results1;
 int16_t results2;
-//uint32_t results1;
-//uint32_t results2;
 
 uint32_t acc_op1 = 0;                       // accumulator 1 value
 uint32_t acc_op2 = 0;                       // accumulator 2 value
-
-
-float pm10 = 0.0;
-float pm2_5 = 0.0;
-
 
 //---------------------------
 // Dust Sensor
@@ -78,7 +65,8 @@ float pm2_5 = 0.0;
 // estimated based on these assumptions, along with
 // the particle concentration.
 
-
+float pm10 = 0.0;
+float pm2_5 = 0.0;
 
 unsigned long starttime;
 
@@ -105,16 +93,6 @@ float countP2;
 #define DUST_P1_PIN 4      // Dust sensor PM2.5 pin
 #define DUST_P2_PIN 3      // Dust senspr PM10 pin
 
-
-//void error(char *str) {
-//
-//  Serial.println("========================================");
-//  Serial.print("error: ");
-//  Serial.println(str);
-//  Serial.println("========================================");
-//  while (1);
-//}
-
 void setup(void) {
 
   pinMode(DHTPIN, INPUT);
@@ -122,7 +100,6 @@ void setup(void) {
   pinMode(DUST_P1_PIN, INPUT); 
   pinMode(DUST_P2_PIN, INPUT); 
 
-  int i;
   Serial.begin(9600);
   Serial.println();
 
@@ -148,7 +125,6 @@ void loop(void) {
   loop_dustsensor();
   // then do 30 seconds of no2 measurement
   loop_no2();
-
 }
 
 
@@ -160,15 +136,6 @@ void loop_no2(void) {
     results1 = ads1115.readADC_Differential_0_1();    // Read ADC ports 0 and 1    
     results2 = ads1115.readADC_Differential_2_3();    // Read ADC ports 2 and 3
     
-    // SEND EVERYTHING TO THE ESP8266
-//    Serial.print("--RAW:");
-//    Serial.print(results1);
-//    Serial.print(":");
-//    Serial.print(results2);
-//    Serial.print(":");
-//    Serial.print(iptr);
-//    Serial.println("#");
-
     acc_op1 += results1;
     acc_op2 += results2;
 
@@ -178,11 +145,11 @@ void loop_no2(void) {
     delay(LOG_INTERVAL);
   }
 
-//    Serial.print("acc_op1");
-//    Serial.println(acc_op1);
+    Serial.print("acc_op1");
+    Serial.println(acc_op1);
 
-//    Serial.print("acc_op2");
-//    Serial.println(acc_op2);
+    Serial.print("acc_op2");
+    Serial.println(acc_op2);
 
 //  if (iptr > FLAVG - 1) {
 
@@ -190,21 +157,22 @@ void loop_no2(void) {
 
     float temperature = dht.readTemperature();
     float hum = dht.readHumidity();
-//    float no2_a = avg_op1 / FLAVG;
-//    float no2_b = avg_op2 / FLAVG;
 
-    int no2_a = 0;
-    int no2_b = 0;
-
-    if (FLAVG == 32) {
-      no2_a = acc_op1 >> 5; // right shift by 5 equals divide by 32
-      no2_b = acc_op2 >> 5; // right shift by 5 equals divide by 32
-    }
+    float no2_a = 0;
+    float no2_b = 0;
     
-    if (FLAVG == 64) {
-      no2_a = acc_op1 >> 6; // right shift by 6 equals divide by 64
-      no2_b = acc_op2 >> 6; // right shift by 6 equals divide by 64
-    }
+    no2_a = acc_op1 / FLAVG;
+    no2_b = acc_op2 / FLAVG;
+
+//    if (FLAVG == 32) {
+//      no2_a = acc_op1 >> 5; // right shift by 5 equals divide by 32
+//      no2_b = acc_op2 >> 5; // right shift by 5 equals divide by 32
+//    }
+//    
+//    if (FLAVG == 64) {
+//      no2_a = acc_op1 >> 6; // right shift by 6 equals divide by 64
+//      no2_b = acc_op2 >> 6; // right shift by 6 equals divide by 64
+//    }
      
     // SEND EVERYTHING TO THE ESP8266
     Serial.println();
@@ -232,7 +200,7 @@ void loop_no2(void) {
 
 void loop_dustsensor() {
 
-//     Serial.println("Start Dust measurments...");
+//Serial.println("Start Dust measurments...");
      
   starttime = millis();
   durationP1 = 0;
@@ -281,6 +249,14 @@ void loop_dustsensor() {
   pm10 = PM10count;
   pm2_5 = PM25count;
 
+//    Serial.print("--RAW dust:");
+//    Serial.print(countP2);
+//    Serial.print(":");
+//    Serial.println(countP1);
+//    Serial.print("--ESP dust:");
+//    Serial.print(pm10);
+//    Serial.print(":");
+//    Serial.println(pm2_5);
     
 }
 
