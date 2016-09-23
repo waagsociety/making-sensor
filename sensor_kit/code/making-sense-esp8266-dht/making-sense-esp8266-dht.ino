@@ -89,7 +89,7 @@ void setup() {
   pinMode(RX_ACTIVITY_LED_PIN, OUTPUT);
   digitalWrite(RX_ACTIVITY_LED_PIN, HIGH); // off
 
-
+  //--------------------------------------------
   //Format FS, reset Wifi settings, for testing
 //  Serial.print("Formatting FS...");
 //  SPIFFS.format();
@@ -101,6 +101,7 @@ void setup() {
 //    delay(1000);
 //    Serial.println("loop...");
 //  }
+  //--------------------------------------------
 
   //read configuration from FS json
   Serial.println("mounting FS...");
