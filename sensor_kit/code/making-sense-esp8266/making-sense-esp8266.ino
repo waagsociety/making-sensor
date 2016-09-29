@@ -91,16 +91,16 @@ void setup() {
 
   //--------------------------------------------
   //Format FS, reset Wifi settings, for testing
-//  Serial.print("Formatting FS...");
-//  SPIFFS.format();
-//  Serial.println("Done.");
-//  Serial.print("Reset WiFi settings...");
-//   wifiManager.resetSettings();  //****
-//  Serial.println("Done.");
-//  while(1) {
-//    delay(1000);
-//    Serial.println("loop...");
-//  }
+  Serial.print("Formatting FS...");
+  SPIFFS.format();
+  Serial.println("Done.");
+  Serial.print("Reset WiFi settings...");
+   wifiManager.resetSettings();  //****
+  Serial.println("Done.");
+  while(1) {
+    delay(1000);
+    Serial.println("loop...");
+  }
   //--------------------------------------------
 
   //read configuration from FS json
