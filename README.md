@@ -4,6 +4,7 @@ This repository contains several modules for the setting up of Making Sense expe
 
 The module `server` contains the settings and the code written for the front-end and back-end of the infrastructure, while `sensor_kit` contains software and specifications for the sensors.
 
+## Data files
 This repository also contains the measurements produced by the sensors as a compressed CSV file: `sensormeasures.csv.zip`
 
 The columns in this file have the following meaning:
