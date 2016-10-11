@@ -19,3 +19,4 @@ airqdaemon.private.key
 airq_key
 GGD.csv
 sensorparameters.csv
+sensormeasures.csv
