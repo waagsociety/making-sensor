@@ -9,7 +9,7 @@ This repository also contains the measurements produced by the sensors. There ar
 
 1. Low-cost devices developed by the [Waag] (http://waag.org/nl/project/urban-airq) that measure NO2, PM, temperature and humidity sensors
 2. Airboxes devices developed by [ECN](https://www.ecn.nl) that measure PM and ultrafine particles (UFPs)
-3. Calibrated data produced by calibrating sensor measurements with GGD reference measurements.
+3. Calibrated data produced by calibrating sensor measurements with [GGD] (http://www.ggd.nl/) reference measurements.
 
 ### Waag sensors
 
