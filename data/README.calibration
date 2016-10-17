@@ -1,0 +1,30 @@
+The datafile urbanairq_no2_final.csv contains hourly averaged and calibrated measurements of nitrogen dioxide (NO2) in microgram per cubic metre (ug/m3).
+
+* ggd, ggd_os: Vondelpark station and Oude Schans station, operated by the public health service GGD Amsterdam
+* ecn_AB46, ecn_AB47: AirBox measurements provided by ECN
+* waag_xxxxx: Experimental NO2 measurements by the Waag
+
+To improve accuracy of the electrochemical NO2 sensor used by the Waag, the calibration of the individual sensors is based on a unique linear regression of the sensor output, temperature, and relative humidity (RH). The sensors were calibrated during two side-by-side calibration periods at the GGD Vondelpark station, right before and after the Urban AirQ campaign. First calibration period: 2 June 2016 - 10 June 2016; second calibration period: 18 August 2016 - 29 August 2016. The effects of sensor drift have been reduced by assuming a linear sensor degradation over time and taking a weighted average of the 1st calibration coefficients and the 2nd calibration coefficients accordingly. Typical error for hourly averages is estimated to be 7 ug/m3.
+
+Although the calibration was done with care, the Waag NO2 data set is still experimental. One should always be aware of possible data artefacts.
+
+
+Known issues
+============
+* Sensor startup time is typically around 4 hours. The high NO2 values during startup are not realistic.
+
+* All electrochemical sensors are very sensitive to sudden changes in RH. The data series have not been corrected for this.
+
+* Sensor 14560051 and 1184206 have been used in other experiments for more than one year. Due to aging they have limited performance.
+
+* Sensor 55303 was removed from 10-14 July for service. When put back into place, an unexplained bias showed up. The calibration is not to be trusted, as the linear sensor degradation assumption is not valid here.
+
+
+* The RH sensor of sensor 1184206 saturates often at 100%. Readings under humid conditions can be less accurate.
+
+* The RH sensor of sensor 1184838 breaks down after July 25. During campaign unrealistic high values of NO2, about two times of AirBox 46 which is located at 65m. Not to be trusted.
+
+* During the campaign, sensor 55300 shows low long-term average NO2 values, when compared to closeby AirBox 46 or Palmes tubes. Not to be trusted.
+
+
+Question and remarks about this data set can be directed to Bas Mijling, mijling@knmi.nl
