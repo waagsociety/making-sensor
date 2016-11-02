@@ -1,10 +1,14 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require 'faraday'
+require 'faraday_middleware'
 require 'yaml'
 require 'pg'
 require 'json'
 require 'mqtt'
+require 'base64'
+
 
 # Global variables
 $mqtt_client = nil
@@ -70,10 +74,10 @@ def makeMQTTConnection(conf, client)
 end
 
 # Release the DB connection
-def closeDBConn(conn)
-  if ( !conn.nil? )
+def closeDBConn(dbConn)
+  if ( !dbConn.nil? )
     begin
-      conn.finish()
+      dbConn.finish()
     rescue Exception => e
       #ignore it
     end
@@ -81,17 +85,17 @@ def closeDBConn(conn)
 end
 
 # Set up the DB connection
-def makeDBConnection(conf, conn)
+def makeDBConnection(conf, dbConn)
 
-  if ( !conn.nil? && conn.status == PGconn::CONNECTION_OK)
-    return conn
+  if ( !dbConn.nil? && dbConn.status == PGconn::CONNECTION_OK)
+    return dbConn
   end
 
   # trying anyway to release the connection just in case
-  closeDBConn(conn)
+  closeDBConn(dbConn)
 
   begin
-    conn = PGconn.open(
+    dbConn = PGconn.open(
       :host => conf['lorasensordb']['host'],
       :port => conf['lorasensordb']['port'],
       :options => conf['lorasensordb']['options'],
@@ -101,7 +105,7 @@ def makeDBConnection(conf, conn)
       :password => conf['lorasensordb']['password']
     )
 
-    conn.prepare("sensordata", "INSERT INTO #{conf['lorasensordb']['measurestable']} " +
+    dbConn.prepare("sensordata", "INSERT INTO #{conf['lorasensordb']['measurestable']} " +
       "(payload, port, counter, dev_eui, frequency, datarate, codingrate, gateway_timestamp," +
       " channel, server_time, rssi, lsnr, rfchain, crc, modulation, gateway_eui, altitude," +
       " longitude, latitude, temp, pm10, pm25, no2a, no2b, humidity) " +
@@ -123,7 +127,35 @@ def makeDBConnection(conf, conn)
     retry
   end
 
-  return conn
+  return dbConn
+end
+
+# HTTP POST function
+def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5, open_timeout=2)
+
+  connection = Faraday.new(host) do |c|
+    c.use FaradayMiddleware::FollowRedirects, limit: 3
+    c.use Faraday::Response::RaiseError       # raise exceptions on 40x, 50x responses
+    c.use Faraday::Adapter::NetHttp
+  end
+
+  connection.headers[:user_agent] = user_agent
+
+  response = nil
+
+  begin
+    response = connection.post do |req|
+      req.url(path)
+      req.options[:timeout] = timeout
+      req.options[:open_timeout] = open_timeout
+      req.headers['Content-Type'] = 'application/json'
+      request["authorization"] = "Basic #{auth_encoded}"
+      req.body = "#{body}"
+    end
+  rescue Faraday::Error::ClientError => e
+    $stderr.puts "Error: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
+  end
+  return response
 end
 
 # Close connections before exiting
@@ -142,6 +174,10 @@ puts ms_conf
 
 mqtt_client = makeMQTTConnection(ms_conf,nil)
 db_conn = makeDBConnection(ms_conf,nil)
+
+# encode the credentials, no need to do this in a loop
+
+auth_encoded = Base64.encode64("#{ms_conf['smartcitizenme']['username']}:#{ms_conf['smartcitizenme']['password']}")
 
 
 while ! $byebye do
@@ -258,6 +294,36 @@ while ! $byebye do
       $stderr.puts "Ignore msg"
     end
 
+  # Post sensor data to smartcitizen.me
+
+  # Format the measures with the right sensor ids
+  measures = {
+      "data": [{
+        "recorded_at": "#{msg_hash[:metadata][0][:server_time]}",
+        "sensors": [
+          {
+	         "id": ms_conf['smartcitizenme']['no2_sensor_id'],
+	          "value": msg_hash[:fields][:op1]
+          },
+          {
+	         "id": ms_conf['smartcitizenme']['pm_sensor_id'],
+	          "value": msg_hash[:fields][:pm25]
+          },
+          {
+	         "id": ms_conf['smartcitizenme']['temp_sensor_id'],
+	          "value": msg_hash[:fields][:temp]
+          },
+          {
+           "id": ms_conf['smartcitizenme']['hum_sensor_id'],
+            "value": msg_hash[:fields][:hum]
+          }
+        ]
+      }]
+  }
+
+  httppost(ms_conf['smartcitizenme']['base_url'], "devices/#{ms_conf['smartcitizenme']['device_id']}/readings",
+          measures, auth_encoded)
+
 
   rescue Exception => e
     $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
@@ -270,6 +336,7 @@ while ! $byebye do
     $stderr.puts "Sleep and continue"
     sleep ms_conf['ttnmqtt']['retry']
   end
+
 end
 
 at_exit do
