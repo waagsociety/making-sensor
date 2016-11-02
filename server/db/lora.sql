@@ -60,20 +60,66 @@ CREATE DATABASE loradb
 
 \connect loradb
 
+-- {
+-- "payload": "MzIzMgnELwILxMQA",
+-- "fields": {
+--   "hum": 47,
+--   "op1": 13106,
+--   "op2": 13106,
+--   "pm10": 50372,
+--   "pm25": 523,
+--   "temp": 25
+-- },
+-- "port": 1,
+-- "counter": 15,
+-- "dev_eui": "000000004D8D3F94",
+-- "metadata": [
+--   {
+--     "frequency": 867.7,
+--     "datarate": "SF7BW125",
+--     "codingrate": "4/5",
+--     "gateway_timestamp": 1492507156,
+--     "channel": 7,
+--     "server_time": "2016-11-01T14:01:42.128849779Z",
+--     "rssi": -73,
+--     "lsnr": 9.2,
+--     "rfchain": 0,
+--     "crc": 1,
+--     "modulation": "LORA",
+--     "gateway_eui": "0000024B08060030",
+--     "altitude": 16,
+--     "longitude": 4.90036,
+--     "latitude": 52.37283
+--   }
+
 CREATE TABLE IF NOT EXISTS measures
 (
-  id bigint NOT NULL DEFAULT (-1),
-  srv_ts timestamp with time zone NOT NULL,
-  topic text NOT NULL DEFAULT 'no topic'::text,
+  payload VARCHAR(18),
+  port smallint,
+  counter bigint NOT NULL,
+  dev_eui VARCHAR(18) NOT NULL,
+  frequency numeric,
+  datarate VARCHAR(10),
+  codingrate VARCHAR(5),
+  gateway_timestamp bigint,
+  channel smallint,
+  server_time timestamp with time zone NOT NULL,
   rssi smallint,
-  temp numeric,
-  pm10 numeric,
-  pm25 numeric,
+  lsnr numeric,
+  rfchain smallint,
+  crc smallint,
+  modulation text,
+  gateway_eui VARCHAR(18) NOT NULL,
+  altitude numeric,
+  longitude numeric,
+  latitude numeric,
   no2a numeric,
   no2b numeric,
+  pm25 numeric,
+  pm10 numeric,
+  temp numeric,
   humidity numeric,
-  message text,
-  CONSTRAINT id_timestamp PRIMARY KEY (id, srv_ts)
+  CONSTRAINT dev_eui_server_time PRIMARY KEY (dev_eui, server_time)
 )
 WITH (
   OIDS=FALSE
