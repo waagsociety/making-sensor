@@ -149,13 +149,17 @@ def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5,
       req.options[:timeout] = timeout
       req.options[:open_timeout] = open_timeout
       req.headers['Content-Type'] = 'application/json'
-      request["authorization"] = "Basic #{auth_encoded}"
+      req.headers["authorization"] = "Basic #{auth_encoded}"
       req.body = "#{body}"
     end
   rescue Faraday::Error::ClientError => e
     $stderr.puts "Error: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
   end
+
+  puts "Post reading response: #{response.status.to_s}"
+
   return response
+
 end
 
 # Close connections before exiting
@@ -298,31 +302,35 @@ while ! $byebye do
 
   # Format the measures with the right sensor ids
   measures = {
-      "data": [{
-        "recorded_at": "#{msg_hash[:metadata][0][:server_time]}",
-        "sensors": [
+      "data" => [{
+        "recorded_at" => "#{msg_hash[:metadata][0][:server_time]}",
+        "sensors" => [
           {
-	         "id": ms_conf['smartcitizenme']['no2_sensor_id'],
-	          "value": msg_hash[:fields][:op1]
+	         "id" => ms_conf['smartcitizenme']['no2_sensor_id'],
+	          "value" => msg_hash[:fields][:op1]
           },
           {
-	         "id": ms_conf['smartcitizenme']['pm_sensor_id'],
-	          "value": msg_hash[:fields][:pm25]
+	         "id" => ms_conf['smartcitizenme']['pm_sensor_id'],
+	          "value" => msg_hash[:fields][:pm25]
           },
           {
-	         "id": ms_conf['smartcitizenme']['temp_sensor_id'],
-	          "value": msg_hash[:fields][:temp]
+	         "id" => ms_conf['smartcitizenme']['temp_sensor_id'],
+	          "value" => msg_hash[:fields][:temp]
           },
           {
-           "id": ms_conf['smartcitizenme']['hum_sensor_id'],
-            "value": msg_hash[:fields][:hum]
+           "id" => ms_conf['smartcitizenme']['hum_sensor_id'],
+            "value" => msg_hash[:fields][:hum]
           }
         ]
       }]
   }
 
+  measures_s = JSON.generate(measures).to_s
+
+  puts "Measures #{measures_s}"
+
   httppost(ms_conf['smartcitizenme']['base_url'], "devices/#{ms_conf['smartcitizenme']['device_id']}/readings",
-          measures, auth_encoded)
+          measures_s, auth_encoded)
 
 
   rescue Exception => e
