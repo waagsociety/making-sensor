@@ -225,11 +225,11 @@ while ! $byebye do
       #   ]
       # }
 
-      parameters = [msg_hash[:payload], msg_hash[:port], msg_hash[:counter], msg_hash[:dev_eui], msg_hash[:metadata][:frequency], msg_hash[:metadata][:datarate],
-            msg_hash[:metadata][:codingrate], msg_hash[:metadata][:gateway_timestamp], msg_hash[:metadata][:channel], msg_hash[:metadata][:server_time],
-            msg_hash[:metadata][:rssi], msg_hash[:metadata][:lsnr], msg_hash[:metadata][:rfchain], msg_hash[:metadata][:crc],
-            msg_hash[:metadata][:modulation], msg_hash[:metadata][:gateway_eui], msg_hash[:metadata][:altitude], msg_hash[:metadata][:longitude],
-            msg_hash[:metadata][:latitude], msg_hash[:fields][:op1], msg_hash[:fields][:op2], msg_hash[:fields][:pm25],
+      parameters = [msg_hash[:payload], msg_hash[:port], msg_hash[:counter], msg_hash[:dev_eui], msg_hash[:metadata][0][:frequency], msg_hash[:metadata][0][:datarate],
+            msg_hash[:metadata][0][:codingrate], msg_hash[:metadata][0][:gateway_timestamp], msg_hash[:metadata][0][:channel], msg_hash[:metadata][0][:server_time],
+            msg_hash[:metadata][0][:rssi], msg_hash[:metadata][0][:lsnr], msg_hash[:metadata][0][:rfchain], msg_hash[:metadata][0][:crc],
+            msg_hash[:metadata][0][:modulation], msg_hash[:metadata][0][:gateway_eui], msg_hash[:metadata][0][:altitude], msg_hash[:metadata][0][:longitude],
+            msg_hash[:metadata][0][:latitude], msg_hash[:fields][:op1], msg_hash[:fields][:op2], msg_hash[:fields][:pm25],
             msg_hash[:fields][:pm10], msg_hash[:fields][:temp], msg_hash[:fields][:hum]]
 
       res = db_conn.exec_prepared("sensordata",  parameters)
@@ -238,7 +238,7 @@ while ! $byebye do
       $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:dev_eui] = -1
-      msg_hash[:metadata][:modulation] = msg
+      msg_hash[:metadata][0][:modulation] = msg
       $stderr.puts "Sleep and retry"
       sleep ms_conf['lorasensordb']['retry']
       retry
@@ -246,7 +246,7 @@ while ! $byebye do
       $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:dev_eui] = -1
-      msg_hash[:metadata][:modulation] = msg
+      msg_hash[:metadata][0][:modulation] = msg
       $stderr.puts "Sleep and retry"
       sleep ms_conf['lorasensordb']['retry']
       retry
