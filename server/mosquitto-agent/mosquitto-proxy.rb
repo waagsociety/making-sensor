@@ -300,25 +300,40 @@ while ! $byebye do
 
   # Post sensor data to smartcitizen.me
 
+  device_id = -1
+  key_id = -1
+
+  ms_conf['smartcitizenme']['devices'].each do |key,device|
+    if ( device['device_address'] == msg_hash[:dev_eui] )
+      device_id = device['device_id']
+      key_id = key
+    end
+  end
+
+  if ( device_id == -1 )
+    $stderr.puts "WARNING: #{msg_hash[:dev_eui]} is not a known device"
+    next
+  end
+
   # Format the measures with the right sensor ids
   measures = {
       "data" => [{
         "recorded_at" => "#{msg_hash[:metadata][0][:server_time]}",
         "sensors" => [
           {
-	         "id" => ms_conf['smartcitizenme']['no2_sensor_id'],
+	         "id" => ms_conf['smartcitizenme']['devices'][key_id]['no2_sensor_id'],
 	          "value" => msg_hash[:fields][:op1]
           },
           {
-	         "id" => ms_conf['smartcitizenme']['pm_sensor_id'],
+	         "id" => ms_conf['smartcitizenme']['devices'][key_id]['pm_sensor_id'],
 	          "value" => msg_hash[:fields][:pm25]
           },
           {
-	         "id" => ms_conf['smartcitizenme']['temp_sensor_id'],
+	         "id" => ms_conf['smartcitizenme']['devices'][key_id]['temp_sensor_id'],
 	          "value" => msg_hash[:fields][:temp]
           },
           {
-           "id" => ms_conf['smartcitizenme']['hum_sensor_id'],
+           "id" => ms_conf['smartcitizenme']['devices'][key_id]['hum_sensor_id'],
             "value" => msg_hash[:fields][:hum]
           }
         ]
@@ -327,9 +342,10 @@ while ! $byebye do
 
   measures_s = JSON.generate(measures).to_s
 
-  puts "Measures #{measures_s}"
+  puts "Measures #{measures_s} for device #{device_id}"
 
-  httppost(ms_conf['smartcitizenme']['base_url'], "devices/#{ms_conf['smartcitizenme']['device_id']}/readings",
+
+  httppost(ms_conf['smartcitizenme']['base_url'], "devices/#{device_id}/readings",
           measures_s, auth_encoded)
 
 
