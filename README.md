@@ -5,7 +5,11 @@ This repository contains several modules for the setting up of Making Sense expe
 The module `server` contains the settings and the code written for the front-end and back-end of the infrastructure, while `sensor_kit` contains software and specifications for the sensors.
 
 ## Data files
-This repository also contains the measurements produced by the sensors. There are three types of sensor measurements produced:
+This repository also contains the measurements produced by the sensors in the data folder.
+
+For a general picture of the data analysis you can have a look at the presentation `data/final_presentation_20161019.pdf`.
+
+There are three types of sensor measurements produced:
 
 1. Low-cost devices developed by the [Waag] (http://waag.org/nl/project/urban-airq) that measure NO2, PM, temperature and humidity sensors
 2. Airboxes devices developed by [ECN](https://www.ecn.nl) that measure PM and ultrafine particles (UFPs)
