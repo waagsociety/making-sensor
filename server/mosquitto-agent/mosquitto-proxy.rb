@@ -189,7 +189,7 @@ while ! $byebye do
     begin
       # blocking call, not ideal if need to exit
       topic,msg = mqtt_client.get()
-    rescue MQTT::Exception, Errno::ECONNRESET => e
+    rescue MQTT::Exception, Errno::ECONNRESET, Exception => e
       $stderr.puts "ERROR: while getting MQTT connection, class: #{e.class.name}, message: #{e.message}"
       if $byebye
         break
