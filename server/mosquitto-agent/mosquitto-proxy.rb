@@ -152,12 +152,12 @@ def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5,
       req.headers["authorization"] = "Basic #{auth_encoded}"
       req.body = "#{body}"
     end
+    puts "Post reading response: #{response.status.to_s}"
   rescue Faraday::Error::ClientError => e
     $stderr.puts "Error: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
   end
 
-  puts "Post reading response: #{response.status.to_s}"
-
+ # can be null
   return response
 
 end
