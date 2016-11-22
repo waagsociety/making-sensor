@@ -58,13 +58,13 @@ def makeMQTTConnection(conf, client)
     client.subscribe([conf['ttnmqtt']['topic'],conf['ttnmqtt']['QoS']])
 
   rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
-    $stderr.puts "CRITICAL: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "ERROR: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
     end
 
-    $stderr.puts "Sleep and retry"
+    $stderr.puts "Sleep #{ms_conf['ttnmqtt']['retry']} seconds and retry"
     sleep conf['ttnmqtt']['retry']
     retry
   end
@@ -116,13 +116,13 @@ def makeDBConnection(conf, dbConn)
        ")")
 
   rescue PGError => e
-    $stderr.puts "CRITICAL: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "ERROR: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
     end
 
-    $stderr.puts "Sleep and retry"
+    $stderr.puts "Sleep #{ms_conf['lorasensordb']['retry']} seconds and retry"
     sleep conf['lorasensordb']['retry']
     retry
   end
@@ -154,7 +154,7 @@ def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5,
     end
     puts "Post reading response: #{response.status.to_s}"
   rescue Faraday::Error::ClientError => e
-    $stderr.puts "Error: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
+    $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
   end
 
  # can be null
@@ -190,12 +190,12 @@ while ! $byebye do
       # blocking call, not ideal if need to exit
       topic,msg = mqtt_client.get()
     rescue MQTT::Exception, Errno::ECONNRESET, Exception => e
-      $stderr.puts "ERROR: while getting MQTT connection, class: #{e.class.name}, message: #{e.message}"
+      $stderr.puts "WARNING: while getting MQTT connection, class: #{e.class.name}, message: #{e.message}"
       if $byebye
         break
       end
 
-      $stderr.puts "Sleep and retry"
+      $stderr.puts "Sleep #{ms_conf['ttnmqtt']['retry']} seconds and retry"
       sleep ms_conf['ttnmqtt']['retry']
       mqtt_client = makeMQTTConnection(ms_conf,mqtt_client)
       retry
@@ -215,7 +215,7 @@ while ! $byebye do
       msg_hash[:message] = msg
     end
 
-    puts "msg: #{msg}, hash: " + msg_hash.to_s
+    puts "topic: #{topic}, msg: #{msg}, hash: " + msg_hash.to_s
 
     #id = topic.delete(ms_conf['ttnmqtt']['topic'].delete('+'))
 
@@ -279,7 +279,7 @@ while ! $byebye do
       $stderr.puts "Save raw message with fake id"
       msg_hash[:dev_eui] = -1
       msg_hash[:metadata][0][:modulation] = msg
-      $stderr.puts "Sleep and retry"
+      $stderr.puts "Sleep #{ms_conf['lorasensordb']['retry']} seconds and retry"
       sleep ms_conf['lorasensordb']['retry']
       retry
     rescue PG::InvalidTextRepresentation => e
@@ -287,7 +287,7 @@ while ! $byebye do
       $stderr.puts "Save raw message with fake id"
       msg_hash[:dev_eui] = -1
       msg_hash[:metadata][0][:modulation] = msg
-      $stderr.puts "Sleep and retry"
+      $stderr.puts "Sleep #{ms_conf['lorasensordb']['retry']} seconds and retry"
       sleep ms_conf['lorasensordb']['retry']
       retry
     rescue PG::CharacterNotInRepertoire => e
@@ -357,7 +357,7 @@ while ! $byebye do
     if $byebye
       break
     end
-    $stderr.puts "Sleep and continue"
+    $stderr.puts "Sleep #{ms_conf['ttnmqtt']['retry']} seconds and retry"
     sleep ms_conf['ttnmqtt']['retry']
   end
 
