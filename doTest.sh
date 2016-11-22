@@ -46,7 +46,7 @@ then
   MY_USER=ubuntu
   SSH_PORT=22
   APP_SERVER=airq.waag.org
-  MQTT_AGENT_LOG='/var/log/mosquitto-agent/mosquitto-agent.log'
+  MQTT_AGENT_LOG='/var/log/airq-agent/airq-agent.log'
 elif [ "${TARGET}" = "waag" ]
 then
 #  set -x
@@ -63,7 +63,7 @@ then
   MY_USER=vagrant
   SSH_PORT=22
   APP_SERVER=airq.local
-  MQTT_AGENT_LOG='/var/log/mosquitto-agent/mosquitto-agent.log'
+  MQTT_AGENT_LOG='/var/log/airq-agent/airq-agent.log'
 else
   echo "Unknown server: ${1}" | tee ${TMP_FILE}
   mail -s "AIRQ Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}

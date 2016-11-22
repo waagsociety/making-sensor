@@ -54,13 +54,13 @@ def makeMQTTConnection(conf, client)
     client.subscribe([conf['mqtt']['topic'],conf['mqtt']['QoS']])
 
   rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
-    $stderr.puts "CRITICAL: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "ERROR: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
     end
 
-    $stderr.puts "Sleep and retry"
+    $stderr.puts "Sleep #{conf['mqtt']['retry']} seconds and retry"
     sleep conf['mqtt']['retry']
     retry
   end
@@ -70,10 +70,10 @@ def makeMQTTConnection(conf, client)
 end
 
 # Release the DB connection
-def closeDBConn(conn)
-  if ( !conn.nil? )
+def closeDBConn(dbConn)
+  if ( !dbConn.nil? )
     begin
-      conn.finish()
+      dbConn.finish()
     rescue Exception => e
       #ignore it
     end
@@ -81,44 +81,44 @@ def closeDBConn(conn)
 end
 
 # Set up the DB connection
-def makeDBConnection(conf, conn)
+def makeDBConnection(conf, dbConn)
 
-  if ( !conn.nil? && conn.status == PGconn::CONNECTION_OK)
-    return conn
+  if ( !dbConn.nil? && dbConn.status == PGconn::CONNECTION_OK)
+    return dbConn
   end
 
   # trying anyway to release the connection just in case
-  closeDBConn(conn)
+  closeDBConn(dbConn)
 
   begin
-    conn = PGconn.open(
-      :host => conf['wifisensordb']['host'],
-      :port => conf['wifisensordb']['port'],
-      :options => conf['wifisensordb']['options'],
-      :tty =>  conf['wifisensordb']['tty'],
-      :dbname => conf['wifisensordb']['dbname'],
-      :user => conf['wifisensordb']['user'],
-      :password => conf['wifisensordb']['password']
+    dbConn = PGconn.open(
+      :host => conf['airqdb']['host'],
+      :port => conf['airqdb']['port'],
+      :options => conf['airqdb']['options'],
+      :tty =>  conf['airqdb']['tty'],
+      :dbname => conf['airqdb']['dbname'],
+      :user => conf['airqdb']['user'],
+      :password => conf['airqdb']['password']
     )
 
-    conn.prepare("sensordata", "INSERT INTO #{conf['wifisensordb']['measurestable']} " +
+    dbConn.prepare("sensordata", "INSERT INTO #{conf['airqdb']['measurestable']} " +
       "(id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, humidity, message) " +
       "VALUES ($1::bigint, $2::timestamp with time zone, $3::text, $4::smallint, $5::numeric, " +
       "$6::numeric, $7::numeric, $8::numeric, $9::numeric, $10::numeric, $11::text)")
 
   rescue PGError => e
-    $stderr.puts "CRITICAL: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
+    $stderr.puts "ERROR: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"
 
     if $byebye
       return nil
     end
 
-    $stderr.puts "Sleep and retry"
-    sleep conf['wifisensordb']['retry']
+    $stderr.puts "Sleep #{conf['airqdb']['retry']} seconds and retry"
+    sleep conf['airqdb']['retry']
     retry
   end
 
-  return conn
+  return dbConn
 end
 
 # Close connections before exiting
@@ -150,7 +150,7 @@ while ! $byebye do
         break
       end
 
-      $stderr.puts "Sleep and retry"
+      $stderr.puts "Sleep #{ms_conf['mqtt']['retry']} seconds and retry"
       sleep ms_conf['mqtt']['retry']
       mqtt_client = makeMQTTConnection(ms_conf,mqtt_client)
       retry
@@ -209,16 +209,16 @@ while ! $byebye do
       $stderr.puts "Save raw message with fake id"
       msg_hash[:i] = -1
       msg_hash[:message] = msg
-      $stderr.puts "Sleep and retry"
-      sleep ms_conf['wifisensordb']['retry']
+      $stderr.puts "Sleep #{ms_conf['airqdb']['retry']} seconds and retry"
+      sleep ms_conf['airqdb']['retry']
       retry
     rescue PG::InvalidTextRepresentation => e
       $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
       $stderr.puts "Save raw message with fake id"
       msg_hash[:i] = -1
       msg_hash[:message] = msg
-      $stderr.puts "Sleep and retry"
-      sleep ms_conf['wifisensordb']['retry']
+      $stderr.puts "Sleep #{ms_conf['airqdb']['retry']} seconds and retry"
+      sleep ms_conf['airqdb']['retry']
       retry
     rescue PG::CharacterNotInRepertoire => e
       $stderr.puts "ERROR: wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
@@ -237,7 +237,7 @@ while ! $byebye do
     if $byebye
       break
     end
-    $stderr.puts "Sleep and continue"
+    $stderr.puts "Sleep #{ms_conf['mqtt']['retry']} seconds and retry"
     sleep ms_conf['mqtt']['retry']
   end
 end

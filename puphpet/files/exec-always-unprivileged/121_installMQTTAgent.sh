@@ -1,5 +1,5 @@
 #NAME_PRG=citysdk_daemon
-MY_SRV=mosquitto-agent
+MY_SRV=airq-agent
 MY_TMP=/tmp/${MY_SRV}
 
 
