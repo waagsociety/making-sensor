@@ -2,7 +2,6 @@ passenger.*.pid
 passenger.*.pid.lock
 airq.passenger.log
 .Rproj.user
-doTest
 .Rhistory
 all.csv
 id_rsa

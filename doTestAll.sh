@@ -55,7 +55,7 @@ then
   MY_USER=stefano
   SSH_PORT=2234
   APP_SERVER=sensor.waag.org:3000
-  MQTT_AGENT_LOG='/home/stefano/making-sensor/screenlog.0'
+  MQTT_AGENT_LOG='/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0'
 elif [ "${TARGET}" = "local" ]
 then
   MY_HOST=192.168.56.101
