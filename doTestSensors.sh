@@ -21,16 +21,16 @@ TARGET="waag"
 
 if [ "${TARGET}" = "waag" ]
 then
-  #set -x
+  # set -x
   MY_HOST=sensor.waag.org
-  SENSORPORT=8090
+  # SENSORPORT=8090
   MY_USER=stefano
   SSH_PORT=2234
   MQTT_AGENT_LOG='/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0'
 elif [ "${TARGET}" = "local" ]
 then
   MY_HOST=192.168.56.101
-  SENSORPORT=80
+  # SENSORPORT=80
   MY_USER=vagrant
   SSH_PORT=22
   MQTT_AGENT_LOG='/var/log/smartkids-agent/smartkids-agent.log'
@@ -42,21 +42,6 @@ fi
 
 
 
-
-parse_yaml() {
-  FILE=${1}
-  CONTEXT=${2}
-  FIELD=${3}
-
-  #echo "FILE=${FILE}, CONTEXT=${CONTEXT}, FIELD=${FIELD}"
-
-   awk  "
-   BEGIN {i=0}
-   /${CONTEXT}:/ {i=1;next}
-   i && /${FIELD}:/ {print \$2;i=0}
-   " ${FILE}
-
-}
 
 diff_min(){
   local DATA_TIME="${1}00"
@@ -119,14 +104,15 @@ else
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    #echo ${MY_TIME}
-    export IFS=$'\n'
-    for i in $(echo ${MY_TIME} | sed 's/+01 /+01@/g' | tr '@' '\n');
+    # echo ${MY_TIME}
+    TMPIFS="${IFS}"
+    IFS=$'\n'
+    for i in $(echo "${MY_TIME}");
     do
-      ID=$(echo ${i}|cut -d'|' -f1);
-      ID_TIME=$(echo ${i}|cut -d'|' -f2);
+      ID="$(echo ${i}|cut -d'|' -f1)"
+      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
       # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME=$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
+      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
       diff_min "${ID_TIME}"
       # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
       if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
@@ -136,24 +122,25 @@ else
         ISSENSOR=true
       fi
     done
-
+    IFS="${TMPIFS}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
   fi
 
-  MY_TIME="$(ssh -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST} 'sudo su postgres -c "psql -t -A -d loradb -c \"SELECT dev_eui, max(server_time) from measures group by dev_eui\" " ' 2>/dev/null)"
+  MY_TIME="$(ssh ${SSH_PARAMS} 'sudo su postgres -c "psql -t -A -d loradb -c \"SELECT dev_eui, max(server_time) from measures group by dev_eui\" " ' 2>/dev/null)"
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    #echo ${MY_TIME}
-    export IFS=$'\n'
-    for i in $(echo ${MY_TIME} | sed 's/+01 /+01@/g' | tr '@' '\n');
+    # echo ${MY_TIME}
+    TMPIFS="${IFS}"
+    IFS=$'\n'
+    for i in $(echo "${MY_TIME}");
     do
-      ID=$(echo ${i}|cut -d'|' -f1);
-      ID_TIME=$(echo ${i}|cut -d'|' -f2);
+      ID="$(echo ${i}|cut -d'|' -f1)"
+      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
       # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME=$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')
+      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
       diff_min "${ID_TIME}"
       # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
       if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
@@ -163,12 +150,11 @@ else
         ISSENSOR=true
       fi
     done
-
+    IFS="${TMPIFS}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
   fi
-
 
   ssh ${SSH_PARAMS} "grep -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsSmartKids.${TARGET}
   if [ -f /tmp/oldErrorsSmartKids.${TARGET} ]
@@ -182,10 +168,10 @@ else
 
   if [ ! -z "${ERRORS}" ]
   then
-    echo "Errors in ${MQTT_AGENT_LOG}: ${ERRORS}" | tee -a ${TMP_FILE}
+    echo "New errors in ${MQTT_AGENT_LOG}: ${ERRORS}" | tee -a ${TMP_FILE}
     PASSED=false
   else
-    echo "No errors in ${MQTT_AGENT_LOG}" | tee -a ${TMP_FILE}
+    echo "No new errors in ${MQTT_AGENT_LOG}" | tee -a ${TMP_FILE}
   fi
 
 fi
