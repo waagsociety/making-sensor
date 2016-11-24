@@ -8,7 +8,7 @@ TIME_THRESHOLD=30
 DISK_THRESHOLD=70
 LOAD_THRESHOLD=1.5
 
-TIME_NOTICE=120
+TIME_NOTICE=1440
 
 TMP_FILE=/tmp/smartkids
 EMAIL_ADDRESS=stefano@waag.org
@@ -27,6 +27,7 @@ then
   MY_USER=stefano
   SSH_PORT=2234
   MQTT_AGENT_LOG='/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0'
+  MY_DIR='/Users/SB/Software/code/'
 elif [ "${TARGET}" = "local" ]
 then
   MY_HOST=192.168.56.101
@@ -34,6 +35,7 @@ then
   MY_USER=vagrant
   SSH_PORT=22
   MQTT_AGENT_LOG='/var/log/smartkids-agent/smartkids-agent.log'
+  MY_DIR='/Users/SB/Software/code/'
 else
   echo "Unknown server: ${1}" | tee ${TMP_FILE}
   mail -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
@@ -73,9 +75,7 @@ then
   PASSED=false
 else
 
-  CONF_FILE=$(find ./ -name makingsense.yaml)
-  #echo ${CONF_FILE}
-  MY_KEY=$(find . -name airq_key)
+  MY_KEY=$(find ${MY_DIR} -name airq_key)
   SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   SSH_PARAMS="${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
 
