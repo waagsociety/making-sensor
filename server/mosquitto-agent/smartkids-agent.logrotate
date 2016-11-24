@@ -1,0 +1,9 @@
+/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0 {
+    rotate 7
+    daily
+    compress
+    copytruncate
+    missingok
+    notifempty
+    size 1M
+}
