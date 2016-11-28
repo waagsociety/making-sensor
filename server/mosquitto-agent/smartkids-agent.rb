@@ -126,7 +126,7 @@ def makeDBConnection(conf, dbConn)
 end
 
 # HTTP POST function
-def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5, open_timeout=2)
+def httppost(host, path, body, auth_encoded, n_retries, sleep_time, user_agent='Waag agent', timeout=5, open_timeout=2)
 
   connection = Faraday.new(host) do |c|
     c.use FaradayMiddleware::FollowRedirects, limit: 3
@@ -138,6 +138,8 @@ def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5,
 
   response = nil
 
+  nretry = n_retries
+
   begin
     response = connection.post do |req|
       req.url(path)
@@ -148,8 +150,18 @@ def httppost(host, path, body, auth_encoded, user_agent='Waag agent', timeout=5,
       req.body = "#{body}"
     end
     puts "Post reading response: #{response.status.to_s}"
+  rescue Faraday::ConnectionFailed => e
+
+    sleep sleep_time
+    if nretry > 0
+      nretry -= 1
+      $stderr.puts "WARNING: Faraday::ConnectionFailed to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
+      retry
+    else
+      $stderr.puts "ERROR: Faraday::ConnectionFailed to #{host} #{path}, #{e.message} in posting reading after #{n_retries} attempts"
+    end
   rescue Faraday::Error::ClientError => e
-    $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading, response: #{response.to_s}, body: #{body}"
+    $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading to #{host} #{path}, response: #{response.to_s}, body: #{body}"
   end
 
  # can be null
@@ -316,7 +328,7 @@ while ! $byebye do
 
 
   httppost(ms_conf['smartcitizenme']['base_url'], "devices/#{device_id}/readings",
-          measures_s, auth_encoded)
+          measures_s, auth_encoded,ms_conf['smartcitizenme']['retry'],ms_conf['smartcitizenme']['retry'])
 
 
   rescue Exception => e
