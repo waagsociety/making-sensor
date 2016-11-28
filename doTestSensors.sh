@@ -59,6 +59,30 @@ diff_min(){
   ELAPSED_MIN=$(( (${NOW}-${DATA_S_TIME}) / 60 ))
 }
 
+check_time(){
+  local MY_TIME="$1"
+
+  TMPIFS="${IFS}"
+  IFS=$'\n'
+  for i in $(echo "${MY_TIME}");
+  do
+    ID="$(echo ${i}|cut -d'|' -f1)"
+    ID_TIME="$(echo ${i}|cut -d'|' -f2)"
+    # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
+    ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
+    diff_min "${ID_TIME}"
+    # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    echo "Data of sensor: ${ID} is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
+    then
+      echo -e "\n*** Data of sensor ${ID} is too old ***\n" | tee -a ${TMP_FILE}
+      PASSED=false
+      ISSENSOR=true
+    fi
+  done
+  IFS="${TMPIFS}"
+}
+
 if [ ! -z ${TERM} ]
 then
   clear
@@ -104,25 +128,7 @@ else
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    # echo ${MY_TIME}
-    TMPIFS="${IFS}"
-    IFS=$'\n'
-    for i in $(echo "${MY_TIME}");
-    do
-      ID="$(echo ${i}|cut -d'|' -f1)"
-      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
-      # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
-      diff_min "${ID_TIME}"
-      # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-      if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
-      then
-        echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
-        PASSED=false
-        ISSENSOR=true
-      fi
-    done
-    IFS="${TMPIFS}"
+    check_time "${MY_TIME}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
@@ -132,25 +138,7 @@ else
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    # echo ${MY_TIME}
-    TMPIFS="${IFS}"
-    IFS=$'\n'
-    for i in $(echo "${MY_TIME}");
-    do
-      ID="$(echo ${i}|cut -d'|' -f1)"
-      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
-      # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
-      diff_min "${ID_TIME}"
-      # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-      if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
-      then
-        echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
-        PASSED=false
-        ISSENSOR=true
-      fi
-    done
-    IFS="${TMPIFS}"
+    check_time "${MY_TIME}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
@@ -178,7 +166,7 @@ fi
 
 if [ ! "$PASSED" = "true" ]
 then
-  echo "Test NOT passed" | tee -a ${TMP_FILE}
+  echo -e "\n*** Test NOT passed ***\n" | tee -a ${TMP_FILE}
   if [ "$ISSENSOR" = "true" ]
   then
     mail -s "SMARTKIDS sensors NOT active" ${EMAIL_ADDRESS} < ${TMP_FILE}
