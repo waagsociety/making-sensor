@@ -3,23 +3,6 @@ load './sensor-agent.rb'
 
 class SmartkidsAgent < SensorAgent
 
-  def calculateHash(msg)
-    begin
-      msg_hash = JSON.parse(msg,symbolize_names: true)
-    rescue JSON::JSONError => e
-      $stderr.puts "ERROR: while processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
-      $stderr.puts "Save raw message with fake id"
-      msg_hash = {}
-      msg_hash[:i] = -1
-      msg_hash[:message] = msg
-    end
-
-    puts "hash: " + msg_hash.to_s
-
-    return msg_hash
-
-  end
-
   def calculateDBParam(srv_ts,msg_hash, topic)
 
     parameters = nil
@@ -86,12 +69,16 @@ class SmartkidsAgent < SensorAgent
 
   end
 
-  def setInvalidHashMsg(error_msg)
+  def setInvalidHashMsg(error_msg,msg_hash)
 
-    msg_hash[:i] = -1
-    msg_hash[:message] = error_msg
+    if (!msg_hash.nil?)
+      my_hash = msg_hash
+    end
 
-    return msg_hash
+    my_hash[:i] = -1
+    my_hash[:message] = error_msg
+
+    return my_hash
 
   end
 

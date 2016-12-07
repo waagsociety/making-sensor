@@ -81,8 +81,15 @@ class SensorAgent
 
         #id = topic.delete(@mqtt_conf['topic'].delete('+'))
 
-        msg_hash = calculateHash(msg)
+        begin
+          msg_hash = JSON.parse(msg,symbolize_names: true)
+        rescue JSON::JSONError => e
+          $stderr.puts "ERROR: while processing sensor data: #{msg}, class: #{e.class.name}, message: #{e.message}"
+          $stderr.puts "Save raw message with fake id"
+          msg_hash = setInvalidHashMsg(msg,msg_hash)
+        end
 
+        puts "hash: " + msg_hash.to_s
 
         begin
 
@@ -92,14 +99,14 @@ class SensorAgent
         rescue PG::NotNullViolation => e
           $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}")
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
           $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
           sleep @db_conf['retry']
           retry
         rescue PG::UniqueViolation => e
           $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}")
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msh_hash)
           $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
           sleep @db_conf['retry']
           retry
@@ -163,12 +170,6 @@ class SensorAgent
 
   protected
 
-  def calculateHash(msg)
-
-    raise "Exception: called base class calculateHash function"
-
-  end
-
   def calculateDBParam(srv_ts,msg, topic)
 
     raise "Exception: called base class calculateDBParam function"
@@ -187,7 +188,7 @@ class SensorAgent
 
   end
 
-  def setInvalidHashMsg(error_msg)
+  def setInvalidHashMsg(error_msg, msg_hash)
 
     raise "Exception: called base class setInvalidHashMsg function"
 
@@ -296,7 +297,6 @@ class SensorAgent
       end
     end
   end
-
 
   # HTTP POST function
   def httppost(host, path, body, auth_encoded, n_retries, sleep_time, user_agent='Waag agent', timeout=5, open_timeout=2)
