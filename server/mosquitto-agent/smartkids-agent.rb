@@ -3,12 +3,7 @@ load './sensor-agent.rb'
 
 class SmartkidsAgent < SensorAgent
 
-  def calculateDBParam(msg, topic)
-
-    srv_ts = Time.now.strftime('%Y-%m-%d %H:%M:%S.%L%z')
-
-      #msg.gsub!("pm2.5","pm25")
-
+  def calculateHash(msg)
     begin
       msg_hash = JSON.parse(msg,symbolize_names: true)
     rescue JSON::JSONError => e
@@ -19,7 +14,13 @@ class SmartkidsAgent < SensorAgent
       msg_hash[:message] = msg
     end
 
-    puts "topic: #{topic}, msg: #{msg}, local timestamp: #{srv_ts}, hash: " + msg_hash.to_s
+    puts "hash: " + msg_hash.to_s
+
+    return msg_hash
+
+  end
+
+  def calculateDBParam(srv_ts,msg_hash, topic)
 
     parameters = nil
     # check for overflow
@@ -76,6 +77,21 @@ class SmartkidsAgent < SensorAgent
     }
 
     return measures
+
+  end
+
+  def getDevID(msg_hash)
+
+    return msg_hash[:i]
+
+  end
+
+  def setInvalidHashMsg(error_msg)
+
+    msg_hash[:i] = -1
+    msg_hash[:message] = error_msg
+
+    return msg_hash
 
   end
 

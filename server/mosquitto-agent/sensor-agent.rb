@@ -73,27 +73,33 @@ class SensorAgent
           retry
         end
 
+        puts "topic: #{topic}, msg: #{msg}"
+
+        srv_ts = Time.now.strftime('%Y-%m-%d %H:%M:%S.%L%z')
+
+        puts "local timestamp: #{srv_ts}"
 
         #id = topic.delete(@mqtt_conf['topic'].delete('+'))
 
+        msg_hash = calculateHash(msg)
+
+
         begin
 
-          parameters = calculateDBParam()
+          parameters = calculateDBParam(srv_ts,msg_hash, topic)
           res = db_conn.exec_prepared("mypreparedquery",  parameters)
 
         rescue PG::NotNullViolation => e
           $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          msg_hash[:i] = -1
-          msg_hash[:message] = "EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}"
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}")
           $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
           sleep @db_conf['retry']
           retry
         rescue PG::UniqueViolation => e
           $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          msg_hash[:i] = -1
-          msg_hash[:message] = "EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}"
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}")
           $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
           sleep @db_conf['retry']
           retry
@@ -113,15 +119,17 @@ class SensorAgent
       device_id = -1
       key_id = -1
 
+      msg_dev_id = getDevID(msg_hash)
+
       @portal_conf['devices'].each do |key,device|
-        if ( device['device_address'] == msg_hash[:i] )
+        if ( device['device_address'] == msg_dev_id )
           device_id = device['device_id']
           key_id = key
         end
       end
 
       if ( device_id == -1 )
-        $stderr.puts "WARNING: #{msg_hash[:i]} is not a known device"
+        $stderr.puts "WARNING: #{msg_dev_id} is not a known device"
         next
       end
 
@@ -155,7 +163,13 @@ class SensorAgent
 
   protected
 
-  def calculateDBParam(msg, topic)
+  def calculateHash(msg)
+
+    raise "Exception: called base class calculateHash function"
+
+  end
+
+  def calculateDBParam(srv_ts,msg, topic)
 
     raise "Exception: called base class calculateDBParam function"
 
@@ -166,6 +180,20 @@ class SensorAgent
     raise "Exception: called base class calculatePostParam function"
 
   end
+
+  def getDevID(msg_hash)
+
+    raise "Exception: called base class getDevID function"
+
+  end
+
+  def setInvalidHashMsg(error_msg)
+
+    raise "Exception: called base class setInvalidHashMsg function"
+
+  end
+
+
 
   private
 
