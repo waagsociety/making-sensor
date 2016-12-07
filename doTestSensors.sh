@@ -8,7 +8,7 @@ TIME_THRESHOLD=30
 DISK_THRESHOLD=70
 LOAD_THRESHOLD=1.5
 
-TIME_NOTICE=120
+TIME_NOTICE=1440
 
 TMP_FILE=/tmp/smartkids
 EMAIL_ADDRESS=stefano@waag.org
@@ -27,6 +27,7 @@ then
   MY_USER=stefano
   SSH_PORT=2234
   MQTT_AGENT_LOG='/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0'
+  MY_DIR='/Users/SB/Software/code/'
 elif [ "${TARGET}" = "local" ]
 then
   MY_HOST=192.168.56.101
@@ -34,6 +35,7 @@ then
   MY_USER=vagrant
   SSH_PORT=22
   MQTT_AGENT_LOG='/var/log/smartkids-agent/smartkids-agent.log'
+  MY_DIR='/Users/SB/Software/code/'
 else
   echo "Unknown server: ${1}" | tee ${TMP_FILE}
   mail -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
@@ -57,6 +59,30 @@ diff_min(){
   ELAPSED_MIN=$(( (${NOW}-${DATA_S_TIME}) / 60 ))
 }
 
+check_time(){
+  local MY_TIME="$1"
+
+  TMPIFS="${IFS}"
+  IFS=$'\n'
+  for i in $(echo "${MY_TIME}");
+  do
+    ID="$(echo ${i}|cut -d'|' -f1)"
+    ID_TIME="$(echo ${i}|cut -d'|' -f2)"
+    # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
+    ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
+    diff_min "${ID_TIME}"
+    # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    echo "Data of sensor: ${ID} is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
+    if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
+    then
+      echo -e "\n*** Data of sensor ${ID} is too old ***\n" | tee -a ${TMP_FILE}
+      PASSED=false
+      ISSENSOR=true
+    fi
+  done
+  IFS="${TMPIFS}"
+}
+
 if [ ! -z ${TERM} ]
 then
   clear
@@ -73,9 +99,7 @@ then
   PASSED=false
 else
 
-  CONF_FILE=$(find ./ -name makingsense.yaml)
-  #echo ${CONF_FILE}
-  MY_KEY=$(find . -name airq_key)
+  MY_KEY=$(find ${MY_DIR} -name airq_key)
   SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   SSH_PARAMS="${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
 
@@ -104,25 +128,7 @@ else
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    # echo ${MY_TIME}
-    TMPIFS="${IFS}"
-    IFS=$'\n'
-    for i in $(echo "${MY_TIME}");
-    do
-      ID="$(echo ${i}|cut -d'|' -f1)"
-      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
-      # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
-      diff_min "${ID_TIME}"
-      # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-      if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
-      then
-        echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
-        PASSED=false
-        ISSENSOR=true
-      fi
-    done
-    IFS="${TMPIFS}"
+    check_time "${MY_TIME}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
@@ -132,25 +138,7 @@ else
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
-    # echo ${MY_TIME}
-    TMPIFS="${IFS}"
-    IFS=$'\n'
-    for i in $(echo "${MY_TIME}");
-    do
-      ID="$(echo ${i}|cut -d'|' -f1)"
-      ID_TIME="$(echo ${i}|cut -d'|' -f2)"
-      # echo "Most recent sensor data: ${ID_TIME} for sensor: ${ID}" | tee -a ${TMP_FILE}
-      ID_TIME="$(echo ${ID_TIME} | sed 's/\(.*\)\.[0-9][0-9]*\(\+.*\)/\1\2/g')"
-      diff_min "${ID_TIME}"
-      # echo "Data is ${ELAPSED_MIN} min old" | tee -a ${TMP_FILE}
-      if (( ${ELAPSED_MIN} > ${TIME_THRESHOLD} )) && (( ${ELAPSED_MIN} < ${TIME_NOTICE} ))
-      then
-        echo "Data of sensor: ${ID} is too old: ${ELAPSED_MIN} min" | tee -a ${TMP_FILE}
-        PASSED=false
-        ISSENSOR=true
-      fi
-    done
-    IFS="${TMPIFS}"
+    check_time "${MY_TIME}"
   else
     echo "ssh command for sensor data failed" | tee -a ${TMP_FILE}
     PASSED=false
@@ -178,7 +166,7 @@ fi
 
 if [ ! "$PASSED" = "true" ]
 then
-  echo "Test NOT passed" | tee -a ${TMP_FILE}
+  echo -e "\n*** Test NOT passed ***\n" | tee -a ${TMP_FILE}
   if [ "$ISSENSOR" = "true" ]
   then
     mail -s "SMARTKIDS sensors NOT active" ${EMAIL_ADDRESS} < ${TMP_FILE}
