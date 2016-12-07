@@ -140,6 +140,10 @@ class SensorAgent
         next
       end
 
+      if ( !@portal_conf['devices'][key_id]['upload'] )
+        next
+      end
+
       # Format the measures with the right sensor ids
       measures = calculatePostParam(srv_ts, msg_hash, key_id)
 
