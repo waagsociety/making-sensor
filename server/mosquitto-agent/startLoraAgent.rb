@@ -1,4 +1,4 @@
-load './smartkids-agent.rb'
+load './lora-agent.rb'
 
 
 # here the main part starts
