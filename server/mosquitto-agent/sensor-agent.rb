@@ -355,4 +355,26 @@ class SensorAgent
 
   end
 
+  def calculatePMConc(nr, type)
+
+    radius = 0
+
+    if (type == "PM2.5")
+      radius = 0.44*10^(-6)
+    elsif (type == "PM10")
+      radius = 2.6*10^(-6)
+    else
+      raise "Exception: unknown PM type: #{type}"
+    end
+
+    volume = (4.0/3.0) * Math.PI * radius^3
+    density = 1.65 * 10^12
+
+    mass = volume * density
+    K = 3531.5
+
+    return nr * K * mass
+
+  end
+
 end

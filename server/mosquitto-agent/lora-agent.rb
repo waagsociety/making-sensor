@@ -22,26 +22,52 @@ class LoraAgent < SensorAgent
 
   def calculatePostParam(srv_ts, msg_hash, key_id)
 
+    shr_h = @portal_conf['devices'][key_id]
+    prm_h = shr_h['params']
+    fld_h = msg_hash[:fields]
+
     # Format the measures with the right sensor ids
     measures = {
         "data" => [{
           "recorded_at" => "#{msg_hash[:metadata][0][:server_time]}",
           "sensors" => [
             {
-  	         "id" => @portal_conf['devices'][key_id]['no2_sensor_id'],
-  	          "value" => msg_hash[:fields][:op1]
+  	         "id" => shr_h['no2a_sensor_id'],
+  	          "value" => fld_h[:op1]
             },
             {
-  	         "id" => @portal_conf['devices'][key_id]['pm_sensor_id'],
-  	          "value" => msg_hash[:fields][:pm25]
+  	         "id" => shr_h['no2b_sensor_id'],
+  	          "value" => fld_h[:op2]
             },
             {
-  	         "id" => @portal_conf['devices'][key_id]['temp_sensor_id'],
-  	          "value" => msg_hash[:fields][:temp]
+  	         "id" => shr_h['no2_sensor_id'],
+  	          "value" => (prm_h[:no2_offset].to_f + prm_h[:no2_no2a_coeff].to_f * fld_h[:op1].to_f +
+              prm_h[:no2_no2b_coeff].to_f * fld_h[:op2].to_f + prm_h[:no2_t_coeff].to_f * fld_h[:temp].to_f +
+              prm_h[:no2_rh_coeff].to_f * fld_h[:hum].to_f).round(2)
             },
             {
-             "id" => @portal_conf['devices'][key_id]['hum_sensor_id'],
-              "value" => msg_hash[:fields][:hum]
+  	         "id" => shr_h['pm25_nr_sensor_id'],
+  	          "value" => fld_h[:pm25]
+            },
+            {
+  	         "id" => shr_h['pm10_nr_sensor_id'],
+  	          "value" => fld_h[:pm10]
+            },
+            {
+  	         "id" => shr_h['pm25_conc_sensor_id'],
+  	          "value" => calculatePMConc(fld_h[:pm25],"PM2.5")
+            },
+            {
+  	         "id" => shr_h['pm10_conc_sensor_id'],
+             "value" => calculatePMConc(fld_h[:pm10],"PM10")
+            },
+            {
+  	         "id" => shr_h['temp_sensor_id'],
+  	          "value" => fld_h[:temp]
+            },
+            {
+             "id" => shr_h['hum_sensor_id'],
+              "value" => fld_h[:hum]
             }
           ]
         }]
