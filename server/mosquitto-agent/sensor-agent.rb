@@ -30,6 +30,7 @@ class SensorAgent
   end
 
   def initialize(mqtt_conf,db_conf,portal_conf)
+
     @mqtt_client = nil
     @db_conn = nil
     @byebye = false
@@ -367,13 +368,13 @@ class SensorAgent
       raise "Exception: unknown PM type: #{type}"
     end
 
-    volume = (4.0/3.0) * Math.PI * radius^3
+    volume = (4.0/3.0) * Math::PI * radius^3
     density = 1.65 * 10^12
 
     mass = volume * density
-    K = 3531.5
+    k = 3531.5
 
-    return nr * K * mass
+    return nr * k * mass
 
   end
 
