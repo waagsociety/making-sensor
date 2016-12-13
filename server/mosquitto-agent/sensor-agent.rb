@@ -57,6 +57,7 @@ class SensorAgent
 
   def read_and_upload
     while ! @byebye do
+      msg_hash = nil
       begin
         begin
           # blocking call, not ideal if need to exit
@@ -123,38 +124,37 @@ class SensorAgent
 
       # Post sensor data to smartcitizen.me
 
-      device_id = -1
-      key_id = -1
+        device_id = -1
+        key_id = -1
 
-      msg_dev_id = getDevID(msg_hash)
+        msg_dev_id = getDevID(msg_hash)
 
-      @portal_conf['devices'].each do |key,device|
-        if ( device['device_address'] == msg_dev_id )
-          device_id = device['device_id']
-          key_id = key
+        @portal_conf['devices'].each do |key,device|
+          if ( device['device_address'] == msg_dev_id )
+            device_id = device['device_id']
+            key_id = key
+          end
         end
-      end
 
-      if ( device_id == -1 )
-        $stderr.puts "WARNING: #{msg_dev_id} is not a known device"
-        next
-      end
+        if ( device_id == -1 )
+          $stderr.puts "WARNING: #{msg_dev_id} is not a known device"
+          next
+        end
 
-      if ( !@portal_conf['devices'][key_id]['upload'] )
-        next
-      end
+        if ( !@portal_conf['devices'][key_id]['upload'] )
+          next
+        end
 
-      # Format the measures with the right sensor ids
-      measures = calculatePostParam(srv_ts, msg_hash, key_id)
+        # Format the measures with the right sensor ids
+        measures = calculatePostParam(srv_ts, msg_hash, key_id)
 
-      measures_s = JSON.generate(measures).to_s
+        measures_s = JSON.generate(measures).to_s
 
-      puts "Measures #{measures_s} for device #{device_id}"
+        puts "Measures #{measures_s} for device #{device_id}"
 
 
-      httppost(@portal_conf['base_url'], "devices/#{device_id}/readings",
-              measures_s, auth_encoded,@portal_conf['retry'],@portal_conf['retry'])
-
+        httppost(@portal_conf['base_url'], "devices/#{device_id}/readings",
+                measures_s, auth_encoded,@portal_conf['retry'],@portal_conf['retry'])
 
       rescue Exception => e
         $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
