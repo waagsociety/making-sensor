@@ -3,7 +3,7 @@ load './sensor-agent.rb'
 
 class SmartkidsAgent < SensorAgent
 
-  def calculateDBParam(srv_ts,msg_hash, topic)
+  def calculateDBParam(srv_ts, msg_hash, msg, topic)
 
     parameters = nil
     # check for overflow

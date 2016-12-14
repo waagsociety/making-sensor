@@ -4,7 +4,7 @@ load './sensor-agent.rb'
 class LoraAgent < SensorAgent
 
 
-  def calculateDBParam(srv_ts,msg_hash, topic)
+  def calculateDBParam(srv_ts, msg_hash, msg, topic)
 
     if ( msg_hash[:metadata][0][:server_time].nil?)
       msg_hash[:metadata][0][:server_time] = srv_ts

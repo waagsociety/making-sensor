@@ -95,7 +95,7 @@ class SensorAgent
 
         begin
 
-          parameters = calculateDBParam(srv_ts,msg_hash, topic)
+          parameters = calculateDBParam(srv_ts,msg_hash, msg, topic)
           res = db_conn.exec_prepared("mypreparedquery",  parameters)
 
         rescue PG::NotNullViolation => e
@@ -108,7 +108,7 @@ class SensorAgent
         rescue PG::UniqueViolation => e
           $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msh_hash)
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
           $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
           sleep @db_conf['retry']
           retry
@@ -175,7 +175,7 @@ class SensorAgent
 
   protected
 
-  def calculateDBParam(srv_ts,msg, topic)
+  def calculateDBParam(srv_ts, msg_hash, msg, topic)
 
     raise "Exception: called base class calculateDBParam function"
 

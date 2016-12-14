@@ -100,7 +100,7 @@ then
 else
 
   MY_KEY=$(find ${MY_DIR} -name airq_key)
-  SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+  SSH_OPTS='-q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   SSH_PARAMS="${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
 
   DISK_LEVELS="$(ssh ${SSH_PARAMS} 'df -h -t ext4 -t ext2 -t ext3 | tr -s " " | cut -d" " -f5 | /bin/grep -v "Use%" | tr -d "%" | tr "\n" " " ')"
