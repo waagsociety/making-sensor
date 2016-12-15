@@ -96,6 +96,8 @@ class SmartkidsAgent < SensorAgent
 
   def setInvalidHashMsg(error_msg,msg_hash)
 
+    my_hash = {}
+
     if (!msg_hash.nil?)
       my_hash = msg_hash
     end

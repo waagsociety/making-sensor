@@ -83,14 +83,16 @@ class LoraAgent < SensorAgent
 
   end
 
-  def setInvalidHashMsg(error_msg)
+  def setInvalidHashMsg(error_msg, msg_hash)
+
+    my_hash = {}
 
     if (!msg_hash.nil?)
       my_hash = msg_hash
     end
 
     my_hash[:dev_eui] = -1
-    msg_hash[:metadata][0][:modulation] = msg
+    msg_hash[:metadata][0][:modulation] = error_msg
 
     return my_hash
 

@@ -225,7 +225,7 @@ class SensorAgent
       )
       @mqtt_client.subscribe(@mqtt_conf['topic'],@mqtt_conf['QoS'])
 
-    rescue MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,SocketError => e
+    rescue MQTT::ProtocolException,MQTT::Exception,Errno::ECONNREFUSED,Errno::ENETUNREACH,Errno::ETIMEDOUT,SocketError => e
       $stderr.puts "ERROR: while connecting to MQTT server, class: #{e.class.name}, message: #{e.message}"
 
       if @byebye
