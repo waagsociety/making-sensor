@@ -25,6 +25,7 @@ class LoraAgent < SensorAgent
     shr_h = @portal_conf['devices'][key_id]
     prm_h = shr_h['params']
     fld_h = msg_hash[:fields]
+    puts "key id: #{key_id}, parameters: #{prm_h}, fields: #{fld_h}"
 
     # Format the measures with the right sensor ids
     measures = {
@@ -73,9 +74,9 @@ class LoraAgent < SensorAgent
         }]
     }
 
-    puts "value => (#{prm_h[:no2_offset].to_f} + #{prm_h[:no2_no2a_coeff].to_f} * #{fld_h[:op1].to_f} + \
-    #{prm_h[:no2_no2b_coeff].to_f} * #{fld_h[:op2].to_f} + #{prm_h[:no2_t_coeff].to_f} * #{fld_h[:temp].to_f} + \
-    #{prm_h[:no2_rh_coeff].to_f} * #{fld_h[:hum].to_f})"
+    puts "value => (#{prm_h['no2_offset'].to_f} + #{prm_h['no2_no2a_coeff'].to_f} * #{fld_h[:op1].to_f} + \
+    #{prm_h['no2_no2b_coeff'].to_f} * #{fld_h[:op2].to_f} + #{prm_h['no2_t_coeff'].to_f} * #{fld_h[:temp].to_f} + \
+    #{prm_h['no2_rh_coeff'].to_f} * #{fld_h[:hum].to_f})"
     return measures
 
   end
