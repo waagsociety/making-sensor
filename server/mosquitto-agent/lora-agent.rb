@@ -95,8 +95,8 @@ class LoraAgent < SensorAgent
 
     if (!msg_hash.nil?)
       my_hash = msg_hash
-      if (msg_hash[:dev_eui] < 0)
-        fake_id = msg_hash[:dev_eui] - 1
+      if (msg_hash[:dev_eui].to_i < 0)
+        fake_id = msg_hash[:dev_eui].to_i - 1
       end
     end
 

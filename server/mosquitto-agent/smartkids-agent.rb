@@ -102,8 +102,8 @@ class SmartkidsAgent < SensorAgent
 
     if (!msg_hash.nil?)
       my_hash = msg_hash
-      if (msg_hash[:i] < 0)
-        fake_id = msg_hash[:i] - 1
+      if (msg_hash[:i].to_i < 0)
+        fake_id = msg_hash[:i].to_i - 1
       end
     end
 
