@@ -155,7 +155,7 @@ class SensorAgent
 
 
         httppost(@portal_conf['base_url'], "devices/#{device_id}/readings",
-                measures_s, auth_encoded,@portal_conf['retry'],@portal_conf['retry'])
+                measures_s, auth_encoded,@portal_conf['retry'],@portal_conf['sleep'])
 
       rescue Exception => e
         $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
@@ -304,7 +304,7 @@ class SensorAgent
   end
 
   # HTTP POST function
-  def httppost(host, path, body, auth_encoded, n_retries, sleep_time, user_agent='Waag agent', timeout=5, open_timeout=2)
+  def httppost(host, path, body, auth_encoded, n_retries, sleep_time, user_agent='Waag agent', timeout=10, open_timeout=10)
 
     connection = Faraday.new(host) do |c|
       c.use FaradayMiddleware::FollowRedirects, limit: 3
