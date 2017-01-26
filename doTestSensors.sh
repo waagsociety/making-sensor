@@ -136,7 +136,9 @@ else
     PASSED=false
   fi
 
-  MY_TIME="$(ssh ${SSH_PARAMS} 'sudo su postgres -c "psql -t -A -d loradb -c \"SELECT dev_eui, max(server_time) from measures group by dev_eui\" " ' 2>/dev/null)"
+
+  MY_TIME="$(ssh ${SSH_PARAMS} 'sudo su postgres -c "psql -t -A -d loradb -c \"SELECT dev_eui, max(server_time) from measures where dev_eui NOT LIKE '\''-%'\'' group by dev_eui\" " '  2>/dev/null)"
+
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
   then
