@@ -13,6 +13,8 @@ TIME_NOTICE=1440
 TMP_FILE=/tmp/smartkids
 EMAIL_ADDRESS=stefano@waag.org
 
+MAIL_OPTS=''
+
 TARGET="waag"
 
 ##########################
@@ -27,7 +29,7 @@ then
   MY_USER=stefano
   SSH_PORT=2234
   MQTT_AGENT_LOG='/home/stefano/making-sensor/server/mosquitto-agent/screenlog.0'
-  MY_DIR='/Users/SB/Software/code/'
+  # MY_DIR='/Users/SB/Software/code/'
 elif [ "${TARGET}" = "local" ]
 then
   MY_HOST=192.168.56.101
@@ -35,10 +37,10 @@ then
   MY_USER=vagrant
   SSH_PORT=22
   MQTT_AGENT_LOG='/var/log/smartkids-agent/smartkids-agent.log'
-  MY_DIR='/Users/SB/Software/code/'
+  # MY_DIR='/Users/SB/Software/code/'
 else
   echo "Unknown server: ${1}" | tee ${TMP_FILE}
-  mail -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+  cat  ${TMP_FILE} | dos2unix | mail ${MAIL_OPTS} -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS}
   exit 1
 fi
 
@@ -99,7 +101,7 @@ then
   PASSED=false
 else
 
-  MY_KEY=$(find ${MY_DIR} -name airq_key)
+  MY_KEY=$(find ${HOME} -name airq_key 2>/dev/null | head -1)
   SSH_OPTS='-q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
   SSH_PARAMS="${SSH_OPTS} -p ${SSH_PORT} -i ${MY_KEY} ${MY_USER}@${MY_HOST}"
 
@@ -169,10 +171,10 @@ then
   echo -e "\n*** Test NOT passed ***\n" | tee -a ${TMP_FILE}
   if [ "$ISSENSOR" = "true" ]
   then
-    mail -s "SMARTKIDS sensors NOT active" ${EMAIL_ADDRESS} < ${TMP_FILE}
+    cat  ${TMP_FILE} | dos2unix | mail ${MAIL_OPTS} -s "SMARTKIDS sensors NOT active" ${EMAIL_ADDRESS}
     #osascript -e 'tell app "System Events" to display dialog "SMARTKIDS Test NOT passed!!"'
   else
-    mail -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS} < ${TMP_FILE}
+    cat  ${TMP_FILE} | dos2unix | mail ${MAIL_OPTS} -s "SMARTKIDS Test NOT passed" ${EMAIL_ADDRESS}
   fi
 
 else
