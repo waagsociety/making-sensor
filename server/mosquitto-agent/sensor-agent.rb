@@ -69,8 +69,8 @@ class SensorAgent
             break
           end
 
-          $stderr.puts "Sleep #{@mqtt_conf['retry']} seconds and retry"
-          sleep @mqtt_conf['retry']
+          $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
+          sleep @mqtt_conf['sleep']
           makeMQTTConnection()
           retry
         end
@@ -102,15 +102,15 @@ class SensorAgent
           $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
           msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
-          $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
-          sleep @db_conf['retry']
+          $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
+          sleep @db_conf['sleep']
           retry
         rescue PG::UniqueViolation => e
           $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
           msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
-          $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
-          sleep @db_conf['retry']
+          $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
+          sleep @db_conf['sleep']
           retry
         rescue PG::InvalidTextRepresentation => e
           $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
@@ -165,8 +165,8 @@ class SensorAgent
         if @byebye
           break
         end
-        $stderr.puts "Sleep #{@mqtt_conf['retry']} seconds and retry"
-        sleep @mqtt_conf['retry']
+        $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
+        sleep @mqtt_conf['sleep']
       end
 
     end
@@ -232,8 +232,8 @@ class SensorAgent
         return
       end
 
-      $stderr.puts "Sleep #{@mqtt_conf['retry']} seconds and retry"
-      sleep @mqtt_conf['retry']
+      $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
+      sleep @mqtt_conf['sleep']
       retry
     end
 
@@ -283,8 +283,8 @@ class SensorAgent
         return nil
       end
 
-      $stderr.puts "Sleep #{@db_conf['retry']} seconds and retry"
-      sleep @db_conf['retry']
+      $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
+      sleep @db_conf['sleep']
       retry
     end
 

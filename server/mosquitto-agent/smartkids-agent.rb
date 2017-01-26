@@ -110,6 +110,8 @@ class SmartkidsAgent < SensorAgent
     my_hash[:i] = fake_id
     my_hash[:message] = error_msg
 
+    puts "New fake msg id: " + my_hash[:i]
+
     return my_hash
 
   end
