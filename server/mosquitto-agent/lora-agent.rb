@@ -103,8 +103,8 @@ class LoraAgent < SensorAgent
     my_hash[:dev_eui] = fake_id
     msg_hash[:metadata][0][:modulation] = error_msg
 
-    puts "New fake msg id: " + my_hash[:dev_eui]
-    
+    puts "New fake msg id: " + my_hash[:dev_eui].to_s
+
     return my_hash
 
   end
