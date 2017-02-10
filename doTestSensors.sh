@@ -148,7 +148,7 @@ else
     PASSED=false
   fi
 
-  ssh ${SSH_PARAMS} "grep -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsSmartKids.${TARGET}
+  ssh ${SSH_PARAMS} "grep -A 10 -E \"ERROR|CRITICAL\" ${MQTT_AGENT_LOG} " 2>/dev/null > /tmp/newErrorsSmartKids.${TARGET}
   if [ -f /tmp/oldErrorsSmartKids.${TARGET} ]
   then
     ERRORS="$(diff /tmp/newErrorsSmartKids.${TARGET} /tmp/oldErrorsSmartKids.${TARGET})"
