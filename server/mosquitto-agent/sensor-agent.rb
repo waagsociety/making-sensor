@@ -70,7 +70,9 @@ class SensorAgent
           end
 
           $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
-          sleep @mqtt_conf['sleep']
+          slept = sleep @mqtt_conf['sleep']
+          $stderr.puts "Slept #{slept} seconds"
+
           makeMQTTConnection()
           retry
         end
@@ -103,14 +105,16 @@ class SensorAgent
           $stderr.puts "Save raw message with fake id"
           msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
           $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
-          sleep @db_conf['sleep']
+          slept = sleep @db_conf['sleep']
+          $stderr.puts "Slept #{slept} seconds"
           retry
         rescue PG::UniqueViolation => e
           $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
           msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
           $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
-          sleep @db_conf['sleep']
+          slept = sleep @db_conf['sleep']
+          $stderr.puts "Slept #{slept} seconds"
           retry
         rescue PG::InvalidTextRepresentation => e
           $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
@@ -166,7 +170,8 @@ class SensorAgent
           break
         end
         $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
-        sleep @mqtt_conf['sleep']
+        slept = sleep @mqtt_conf['sleep']
+        $stderr.puts "Slept #{slept} seconds"
       end
 
     end
@@ -233,7 +238,8 @@ class SensorAgent
       end
 
       $stderr.puts "Sleep #{@mqtt_conf['sleep']} seconds and retry"
-      sleep @mqtt_conf['sleep']
+      slept = sleep @mqtt_conf['sleep']
+      $stderr.puts "Slept #{slept} seconds"
       retry
     end
 
@@ -284,7 +290,8 @@ class SensorAgent
       end
 
       $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
-      sleep @db_conf['sleep']
+      slept = sleep @db_conf['sleep']
+      $stderr.puts "Slept #{slept} seconds"
       retry
     end
 
@@ -330,19 +337,21 @@ class SensorAgent
       puts "Post reading response: #{response.status.to_s}"
     rescue Faraday::ConnectionFailed => e
 
-      sleep sleep_time
       if nretry > 0
         nretry -= 1
         $stderr.puts "WARNING: Faraday::ConnectionFailed to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
+        slept = sleep sleep_time
+        $stderr.puts "Slept #{slept} seconds"
         retry
       else
         $stderr.puts "ERROR: Faraday::ConnectionFailed to #{host} #{path}, #{e.message} in posting reading after #{n_retries} attempts"
       end
     rescue Faraday::TimeoutError, Net::ReadTimeout => e
-      sleep sleep_time
       if nretry > 0
         nretry -= 1
         $stderr.puts "WARNING: #{e.class.name} to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
+        slept = sleep sleep_time
+        $stderr.puts "Slept #{slept} seconds"
         retry
       else
         $stderr.puts "ERROR: #{e.class.name} to #{host} #{path}, #{e.message} in posting reading after #{n_retries} attempts"
