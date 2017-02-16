@@ -14,8 +14,8 @@ class LoraAgent < SensorAgent
           msg_hash[:metadata][0][:codingrate], msg_hash[:metadata][0][:gateway_timestamp], msg_hash[:metadata][0][:channel], msg_hash[:metadata][0][:server_time],
           msg_hash[:metadata][0][:rssi], msg_hash[:metadata][0][:lsnr], msg_hash[:metadata][0][:rfchain], msg_hash[:metadata][0][:crc],
           msg_hash[:metadata][0][:modulation], msg_hash[:metadata][0][:gateway_eui], msg_hash[:metadata][0][:altitude], msg_hash[:metadata][0][:longitude],
-          msg_hash[:metadata][0][:latitude], msg_hash[:fields][:op1], msg_hash[:fields][:op2], msg_hash[:fields][:pm25],
-          msg_hash[:fields][:pm10], msg_hash[:fields][:temp], msg_hash[:fields][:hum]]
+          msg_hash[:metadata][0][:latitude], msg_hash[:fields][:temp], msg_hash[:fields][:pm10], msg_hash[:fields][:pm25],msg_hash[:fields][:op1],
+          msg_hash[:fields][:op2], msg_hash[:fields][:hum]]
 
     return parameters
   end
