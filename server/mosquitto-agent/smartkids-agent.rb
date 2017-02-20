@@ -37,7 +37,7 @@ class SmartkidsAgent < SensorAgent
     parameters = nil
 
     # (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, humidity, message)
-    parameters = [msg_hash[:i], srv_ts, topic]
+    parameters = [msg_hash[:i], srv_ts]
 
     return parameters
   end
