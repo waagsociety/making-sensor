@@ -15,7 +15,6 @@ class SensorAgent
   attr_accessor :mqtt_client
   attr_accessor :db_conn
   attr_accessor :byebye
-  attr_accessor :auth_encoded
 
   attr_accessor :mqtt_conf
   attr_accessor :db_conf
@@ -52,7 +51,7 @@ class SensorAgent
 
     # encode the credentials, no need to do this in a loop
 
-    @auth_encoded = Base64.encode64("#{@portal_conf['username']}:#{@portal_conf['password']}")
+
 
   end
 
@@ -110,10 +109,11 @@ class SensorAgent
           retry
         rescue PG::UniqueViolation => e
           $stderr.puts "WARNING: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
-          $stderr.puts "Increment message counter"
-          res = db_conn.exec_prepared("mypreparedupdate")
-          # skip uploading message since it should already have been uploaded
-          next
+          $stderr.puts "Save raw message with fake id"
+          parameters = calculateUpdateParams(srv_ts,msg_hash, msg, topic)
+          # res = db_conn.exec_prepared("mypreparedupdate", parameters)
+          # msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
+          retry
         rescue PG::InvalidTextRepresentation => e
           $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
           $stderr.puts "Ignore msg"
@@ -163,7 +163,8 @@ class SensorAgent
 
 
         httppost(@portal_conf['base_url'], "devices/#{device_id}/readings",
-                measures_s, auth_encoded,@portal_conf['retry'],@portal_conf['sleep'])
+                measures_s, @portal_conf['devices'][key_id]['username'],@portal_conf['devices'][key_id]['password'],
+                @portal_conf['retry'],@portal_conf['sleep'])
 
       rescue Exception => e
         $stderr.puts "CRITICAL: Generic exception caught in process loop, class: #{e.class.name}, message: #{e.message}"
@@ -322,7 +323,9 @@ class SensorAgent
   end
 
   # HTTP POST function
-  def httppost(host, path, body, auth_encoded, n_retries, sleep_time, user_agent='Waag agent', timeout=10, open_timeout=10)
+  def httppost(host, path, body, username, password, n_retries, sleep_time, user_agent='Waag agent', timeout=10, open_timeout=10)
+
+    auth_encoded = Base64.encode64("#{username}:#{password}")
 
     connection = Faraday.new(host) do |c|
       c.use FaradayMiddleware::FollowRedirects, limit: 3
