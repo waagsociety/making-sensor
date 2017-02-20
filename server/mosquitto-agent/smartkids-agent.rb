@@ -3,7 +3,7 @@ load './sensor-agent.rb'
 
 class SmartkidsAgent < SensorAgent
 
-  def calculateDBParam(srv_ts, msg_hash, msg, topic)
+  def calculateInsertParams(srv_ts, msg_hash, msg, topic)
 
     parameters = nil
     # check for overflow
@@ -28,6 +28,16 @@ class SmartkidsAgent < SensorAgent
     # (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, humidity, message)
     parameters = [msg_hash[:i], srv_ts, topic, msg_hash[:r], msg_hash[:t], msg_hash[:p10],
           msg_hash['p2.5'.to_sym], msg_hash[:a], msg_hash[:b], msg_hash[:h], msg_hash[:message]]
+
+    return parameters
+  end
+
+  def calculateUpdateParams(srv_ts, msg_hash, msg, topic)
+
+    parameters = nil
+
+    # (id, srv_ts, topic, rssi, temp, pm10, pm25, no2a, no2b, humidity, message)
+    parameters = [msg_hash[:i], srv_ts, topic]
 
     return parameters
   end

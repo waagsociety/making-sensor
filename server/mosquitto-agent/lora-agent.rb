@@ -4,7 +4,7 @@ load './sensor-agent.rb'
 class LoraAgent < SensorAgent
 
 
-  def calculateDBParam(srv_ts, msg_hash, msg, topic)
+  def calculateInsertParams(srv_ts, msg_hash, msg, topic)
 
     if ( msg_hash[:metadata][0][:server_time].nil?)
       msg_hash[:metadata][0][:server_time] = srv_ts
@@ -19,6 +19,18 @@ class LoraAgent < SensorAgent
 
     return parameters
   end
+
+  def calculateUpdateParams(srv_ts, msg_hash, msg, topic)
+
+    if ( msg_hash[:metadata][0][:server_time].nil?)
+      msg_hash[:metadata][0][:server_time] = srv_ts
+    end
+
+    parameters = [msg_hash[:dev_eui], msg_hash[:metadata][0][:server_time]]
+
+    return parameters
+  end
+
 
   def calculatePostParam(srv_ts, msg_hash, key_id)
 

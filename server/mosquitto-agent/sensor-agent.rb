@@ -97,7 +97,7 @@ class SensorAgent
 
         begin
 
-          parameters = calculateDBParam(srv_ts,msg_hash, msg, topic)
+          parameters = calculateInsertParams(srv_ts,msg_hash, msg, topic)
           res = db_conn.exec_prepared("mypreparedinsert",  parameters)
 
         rescue PG::NotNullViolation => e
@@ -184,9 +184,15 @@ class SensorAgent
 
   protected
 
-  def calculateDBParam(srv_ts, msg_hash, msg, topic)
+  def calculateInsertParams(srv_ts, msg_hash, msg, topic)
 
-    raise "Exception: called base class calculateDBParam function"
+    raise "Exception: called base class calculateInsertParams function"
+
+  end
+
+  def calculateUpdateParams(srv_ts, msg_hash, msg, topic)
+
+    raise "Exception: called base class calculateUpdateParams function"
 
   end
 
