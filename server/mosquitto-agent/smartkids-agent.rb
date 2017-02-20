@@ -76,11 +76,11 @@ class SmartkidsAgent < SensorAgent
             },
             {
              'id' => @portal_conf['devices'][key_id]['pm25_conc_sensor_id'],
-              'value' => calculatePMConc(msg_hash['p2.5'.to_sym],'PM2.5')
+              'value' => calculatePMConc(msg_hash['p2.5'.to_sym].to_f,'PM2.5')
             },
             {
              'id' => @portal_conf['devices'][key_id]['pm10_conc_sensor_id'],
-              'value' => calculatePMConc(msg_hash[:p10],'PM10')
+              'value' => calculatePMConc(msg_hash[:p10].to_f,'PM10')
             },
             {
              'id' => @portal_conf['devices'][key_id]['temp_sensor_id'],

@@ -68,11 +68,11 @@ class LoraAgent < SensorAgent
             },
             {
   	         'id' => shr_h['pm25_conc_sensor_id'],
-  	          'value' => calculatePMConc(fld_h[:pm25],'PM2.5')
+  	          'value' => calculatePMConc(fld_h[:pm25].to_f,'PM2.5')
             },
             {
   	         'id' => shr_h['pm10_conc_sensor_id'],
-             'value' => calculatePMConc(fld_h[:pm10],'PM10')
+             'value' => calculatePMConc(fld_h[:pm10].to_f,'PM10')
             },
             {
   	         'id' => shr_h['temp_sensor_id'],
