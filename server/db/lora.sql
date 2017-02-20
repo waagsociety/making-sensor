@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS measures
   pm10 numeric,
   temp numeric,
   humidity numeric,
+  msgcount integer NOT NULL DEFAULT 1,
   CONSTRAINT dev_eui_server_time PRIMARY KEY (dev_eui, server_time)
 )
 WITH (

@@ -98,33 +98,37 @@ class SensorAgent
         begin
 
           parameters = calculateDBParam(srv_ts,msg_hash, msg, topic)
-          res = db_conn.exec_prepared("mypreparedquery",  parameters)
+          res = db_conn.exec_prepared("mypreparedinsert",  parameters)
 
         rescue PG::NotNullViolation => e
           $stderr.puts "ERROR: while inserting message (PG::NotNullViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
           msg_hash = setInvalidHashMsg("EXCEPTION: PG::NotNullViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
-          $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
-          slept = sleep @db_conf['sleep']
-          $stderr.puts "Slept #{slept} seconds"
+          # $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
+          # slept = sleep @db_conf['sleep']
+          # $stderr.puts "Slept #{slept} seconds"
           retry
         rescue PG::UniqueViolation => e
-          $stderr.puts "ERROR: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
-          $stderr.puts "Save raw message with fake id"
-          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
-          $stderr.puts "Sleep #{@db_conf['sleep']} seconds and retry"
-          slept = sleep @db_conf['sleep']
-          $stderr.puts "Slept #{slept} seconds"
-          retry
+          $stderr.puts "WARNING: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
+          $stderr.puts "Increment message counter"
+          res = db_conn.exec_prepared("mypreparedupdate")
+          # skip uploading message since it should already have been uploaded
+          next
         rescue PG::InvalidTextRepresentation => e
           $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
           $stderr.puts "Ignore msg"
+          # we do not understand the message, do not upload it
+          next
         rescue PG::CharacterNotInRepertoire => e
           $stderr.puts "ERROR: wrong encoding (PG::CharacterNotInRepertoire) for message: #{msg}, error: #{e.message}"
           $stderr.puts "Ignore msg"
+          # we do not understand the message, do not upload it
+          next
         rescue PGError => e
           $stderr.puts "ERROR: while inserting into DB, class: #{e.class.name}, message: #{e.message}, payload: #{msg}"
           $stderr.puts "Ignore msg"
+          # we do not understand the message, do not upload it
+          next
         end
 
       # Post sensor data to smartcitizen.me
@@ -280,7 +284,8 @@ class SensorAgent
         :password => @db_conf['password']
       )
 
-      @db_conn.prepare("mypreparedquery", @db_conf['query'])
+      @db_conn.prepare("mypreparedinsert", @db_conf['queryinsert'])
+      @db_conn.prepare("mypreparedupdate", @db_conf['queryupdate'])
 
     rescue PGError => e
       $stderr.puts "ERROR: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"

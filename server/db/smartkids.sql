@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS measures
   no2b numeric,
   humidity numeric,
   message text,
+  msgcount integer NOT NULL DEFAULT 1,
   CONSTRAINT id_timestamp PRIMARY KEY (id, srv_ts)
 )
 WITH (
