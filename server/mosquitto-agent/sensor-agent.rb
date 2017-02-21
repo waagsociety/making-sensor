@@ -62,7 +62,7 @@ class SensorAgent
         begin
           # blocking call, not ideal if need to exit
           topic,msg = @mqtt_client.get()
-        rescue MQTT::Exception, Errno::ECONNRESET, Exception => e
+        rescue MQTT::Exception, MQTT::ProtocolException, Errno::ECONNRESET, Exception => e
           $stderr.puts "WARNING: while getting MQTT connection, class: #{e.class.name}, message: #{e.message}"
           if @byebye
             break
