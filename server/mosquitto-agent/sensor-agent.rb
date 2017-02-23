@@ -110,9 +110,9 @@ class SensorAgent
         rescue PG::UniqueViolation => e
           $stderr.puts "WARNING: while inserting message (PG::UniqueViolation): #{msg}, error: #{e.message}"
           $stderr.puts "Save raw message with fake id"
-          parameters = calculateUpdateParams(srv_ts,msg_hash, msg, topic)
+          msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
+          # parameters = calculateUpdateParams(srv_ts,msg_hash, msg, topic)
           # res = db_conn.exec_prepared("mypreparedupdate", parameters)
-          # msg_hash = setInvalidHashMsg("EXCEPTION: PG::UniqueViolation, ERROR: #{e.message}, MESSAGE: #{msg}",msg_hash)
           retry
         rescue PG::InvalidTextRepresentation => e
           $stderr.puts "ERROR: while inserting message (PG::InvalidTextRepresentation): #{msg}, error: #{e.message}"
