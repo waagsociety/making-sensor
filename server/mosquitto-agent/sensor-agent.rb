@@ -352,30 +352,30 @@ class SensorAgent
     rescue Faraday::ConnectionFailed => e
 
       if nretry > 0
-        nretry -= 1
         $stderr.puts "WARNING: Faraday::ConnectionFailed to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
         slept = sleep sleep_time
         $stderr.puts "Slept #{slept} seconds"
+        nretry -= 1
         retry
       else
         $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading to #{host} #{path} after #{n_retries} attempts, response: #{response.to_s}, body: #{body}"
       end
     rescue Faraday::TimeoutError, Net::ReadTimeout => e
       if nretry > 0
-        nretry -= 1
         $stderr.puts "WARNING: #{e.class.name} to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
         slept = sleep sleep_time
         $stderr.puts "Slept #{slept} seconds"
+        nretry -= 1
         retry
       else
         $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading to #{host} #{path} after #{n_retries} attempts, response: #{response.to_s}, body: #{body}"
       end
     rescue Faraday::Error::ClientError => e
       if nretry > 0
-        nretry -= 1
         $stderr.puts "WARNING: #{e.class.name} to #{host} #{path}, #{e.message} in posting reading, will retry #{nretry} times, body: #{body}"
         slept = sleep sleep_time
         $stderr.puts "Slept #{slept} seconds"
+        nretry -= 1
         retry
       else
         $stderr.puts "ERROR: #{e.class.name}, #{e.message} in posting reading to #{host} #{path} after #{n_retries} attempts, response: #{response.to_s}, body: #{body}"
