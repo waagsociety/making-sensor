@@ -97,6 +97,9 @@ class SensorAgent
         begin
 
           parameters = calculateInsertParams(srv_ts,msg_hash, msg, topic)
+          if ( parameters.nil? )
+            next
+          end
           res = db_conn.exec_prepared("mypreparedinsert",  parameters)
 
         rescue PG::NotNullViolation => e

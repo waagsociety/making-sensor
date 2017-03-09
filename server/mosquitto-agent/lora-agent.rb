@@ -6,6 +6,11 @@ class LoraAgent < SensorAgent
 
   def calculateInsertParams(srv_ts, msg_hash, msg, topic)
 
+    if ( msg_hash[:fields].nil ? )
+      $stderr.puts "WARNING: empty fields in message: #{msg}"
+      return nil
+    end
+
     if ( msg_hash[:metadata][0][:server_time].nil?)
       msg_hash[:metadata][0][:server_time] = srv_ts
     end
