@@ -55,7 +55,9 @@ class LoraAgent < SensorAgent
     parameters = [msg_hash[:app_id], msg_hash[:dev_id], msg_hash[:hardware_serial], msg_hash[:port], msg_hash[:counter], msg_hash[:payload_raw],
           msg_hash[:payload_fields][:op1], msg_hash[:payload_fields][:op2], msg_hash[:payload_fields][:pm25], msg_hash[:payload_fields][:pm10],
           msg_hash[:payload_fields][:temp], msg_hash[:payload_fields][:hum], msg_hash[:metadata][:time], msg_hash[:metadata][:frequency],
-          msg_hash[:metadata][:modulation], msg_hash[:metadata][:data_rate], msg_hash[:metadata][:coding_rate], msg_hash[:metadata][:gateways]]
+          msg_hash[:metadata][:modulation], msg_hash[:metadata][:data_rate], msg_hash[:metadata][:coding_rate], msg_hash[:metadata][:gateways].to_json]
+
+    puts "gateways: " + msg_hash[:metadata][:gateways].to_s
 
     return parameters
   end
@@ -66,7 +68,7 @@ class LoraAgent < SensorAgent
       msg_hash[:metadata][:time] = srv_ts
     end
 
-    parameters = [msg_hash[:dev_id], msg_hash[:metadata][:time]]
+    parameters = [msg_hash[:hardware_serial], msg_hash[:metadata][:time]]
 
     return parameters
   end
@@ -135,7 +137,7 @@ class LoraAgent < SensorAgent
 
   def getDevID(msg_hash)
 
-    return msg_hash[:dev_id]
+    return msg_hash[:hardware_serial]
 
   end
 
@@ -147,15 +149,15 @@ class LoraAgent < SensorAgent
 
     if (!msg_hash.nil?)
       my_hash = msg_hash
-      if (msg_hash[:dev_id].to_i < 0)
-        fake_id = msg_hash[:dev_id].to_i - 1
+      if (msg_hash[:hardware_serial].to_i < 0)
+        fake_id = msg_hash[:hardware_serial].to_i - 1
       end
     end
 
-    my_hash[:dev_id] = fake_id
+    my_hash[:hardware_serial] = fake_id
     msg_hash[:metadata][:modulation] = error_msg
 
-    puts "New fake msg id: " + my_hash[:dev_id].to_s
+    puts "New fake msg id: " + my_hash[:hardware_serial].to_s
 
     return my_hash
 
