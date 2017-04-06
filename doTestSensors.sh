@@ -8,7 +8,7 @@ TIME_THRESHOLD=30
 DISK_THRESHOLD=70
 LOAD_THRESHOLD=1.5
 
-TIME_NOTICE=1440
+TIME_NOTICE=120
 
 TMP_FILE=/tmp/smartkids
 EMAIL_ADDRESS=stefano@waag.org
@@ -137,7 +137,7 @@ else
   fi
 
 
-  MY_TIME="$(ssh ${SSH_PARAMS} 'sudo su postgres -c "psql -t -A -d loradb -c \"SELECT dev_eui, max(server_time) from measures where dev_eui NOT LIKE '\''-%'\'' group by dev_eui\" " '  2>/dev/null)"
+  MY_TIME="$(ssh ${SSH_PARAMS} 'sudo su postgres -c "psql -t -A -d lora2db -c \"SELECT hardware_serial, max(server_time) from measures where hardware_serial NOT LIKE '\''-%'\'' group by hardware_serial\" " '  2>/dev/null)"
 
   # echo "ssh ${SSH_PARAMS}"
   if [ ! -z "${MY_TIME}" ]
