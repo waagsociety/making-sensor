@@ -101,9 +101,9 @@ CREATE DATABASE lora2db
 
 CREATE TABLE IF NOT EXISTS measures
 (
-    app_id character varying(18) COLLATE pg_catalog."default",
+    app_id character varying(18) COLLATE pg_catalog."default" NOT NULL,
     dev_id character varying(18) COLLATE pg_catalog."default" NOT NULL,
-    hardware_serial character varying(18) COLLATE pg_catalog."default",
+    hardware_serial character varying(18) COLLATE pg_catalog."default" NOT NULL,
     port smallint,
     counter bigint NOT NULL,
     payload_raw character varying(18) COLLATE pg_catalog."default",
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS measures
     data_rate character varying(10) COLLATE pg_catalog."default",
     coding_rate character varying(5) COLLATE pg_catalog."default",
     gateways jsonb,
-    CONSTRAINT dev_id_server_time PRIMARY KEY (dev_id, server_time)
+    CONSTRAINT hardware_serial_server_time PRIMARY KEY (hardware_serial, server_time)
 )
 WITH (
     OIDS = FALSE
