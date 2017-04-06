@@ -295,7 +295,7 @@ class SensorAgent
       )
 
       @db_conn.prepare("mypreparedinsert", @db_conf['queryinsert'])
-      @db_conn.prepare("mypreparedupdate", @db_conf['queryupdate'])
+      # @db_conn.prepare("mypreparedupdate", @db_conf['queryupdate'])
 
     rescue PGError => e
       $stderr.puts "ERROR: while connecting to Postgres server, class: #{e.class.name}, message: #{e.message}"

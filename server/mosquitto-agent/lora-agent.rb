@@ -6,32 +6,67 @@ class LoraAgent < SensorAgent
 
   def calculateInsertParams(srv_ts, msg_hash, msg, topic)
 
-    if ( msg_hash[:fields].nil? )
+    if ( msg_hash[:payload_fields].nil? )
       $stderr.puts "WARNING: empty fields in message: #{msg}"
       return nil
     end
 
-    if ( msg_hash[:metadata][0][:server_time].nil?)
-      msg_hash[:metadata][0][:server_time] = srv_ts
+    if ( msg_hash[:metadata][:time].nil?)
+      msg_hash[:metadata][:time] = srv_ts
     end
 
-    parameters = [msg_hash[:payload], msg_hash[:port], msg_hash[:counter], msg_hash[:dev_eui], msg_hash[:metadata][0][:frequency], msg_hash[:metadata][0][:datarate],
-          msg_hash[:metadata][0][:codingrate], msg_hash[:metadata][0][:gateway_timestamp], msg_hash[:metadata][0][:channel], msg_hash[:metadata][0][:server_time],
-          msg_hash[:metadata][0][:rssi], msg_hash[:metadata][0][:lsnr], msg_hash[:metadata][0][:rfchain], msg_hash[:metadata][0][:crc],
-          msg_hash[:metadata][0][:modulation], msg_hash[:metadata][0][:gateway_eui], msg_hash[:metadata][0][:altitude], msg_hash[:metadata][0][:longitude],
-          msg_hash[:metadata][0][:latitude], msg_hash[:fields][:temp], msg_hash[:fields][:pm10], msg_hash[:fields][:pm25],msg_hash[:fields][:op1],
-          msg_hash[:fields][:op2], msg_hash[:fields][:hum]]
+    # {
+    #   "app_id": "makingsense",
+    #   "dev_id": "boralorawest",
+    #   "hardware_serial": "00000000985A5569",
+    #   "port": 1,
+    #   "counter": 1586,
+    #   "payload_raw": "BMcFTAfQJQECAAAA",
+    #   "payload_fields": {
+    #     "hum": 37,
+    #     "op1": 1223,
+    #     "op2": 1356,
+    #     "pm10": 0,
+    #     "pm25": 258,
+    #     "temp": 20
+    #   },
+    #   "metadata": {
+    #     "time": "2017-04-05T14:24:30.097582156Z",
+    #     "frequency": 868.5,
+    #     "modulation": "LORA",
+    #     "data_rate": "SF7BW125",
+    #     "coding_rate": "4\/5",
+    #     "gateways": [
+    #       {
+    #         "gtw_id": "eui-0000024b08060712",
+    #         "timestamp": 4157431915,
+    #         "time": "",
+    #         "channel": 2,
+    #         "rssi": -57,
+    #         "snr": 8,
+    #         "rf_chain": 1,
+    #         "latitude": 52.36936,
+    #         "longitude": 4.8623486
+    #       }
+    #     ]
+    #   }
+    # }
+
+    parameters = [msg_hash[:app_id], msg_hash[:dev_id], msg_hash[:hardware_serial], msg_hash[:port], msg_hash[:counter], msg_hash[:payload_raw],
+          msg_hash[:payload_fields][:op1], msg_hash[:payload_fields][:op2], msg_hash[:payload_fields][:pm25], msg_hash[:payload_fields][:pm10],
+          msg_hash[:payload_fields][:temp], msg_hash[:payload_fields][:hum], msg_hash[:metadata][:time], msg_hash[:metadata][:frequency],
+          msg_hash[:metadata][:modulation], msg_hash[:metadata][:data_rate], msg_hash[:metadata][:coding_rate], msg_hash[:metadata][:gateways]]
 
     return parameters
   end
 
   def calculateUpdateParams(srv_ts, msg_hash, msg, topic)
 
-    if ( msg_hash[:metadata][0][:server_time].nil?)
-      msg_hash[:metadata][0][:server_time] = srv_ts
+    if ( msg_hash[:metadata][:time].nil?)
+      msg_hash[:metadata][:time] = srv_ts
     end
 
-    parameters = [msg_hash[:dev_eui], msg_hash[:metadata][0][:server_time]]
+    parameters = [msg_hash[:dev_id], msg_hash[:metadata][:time]]
 
     return parameters
   end
@@ -41,13 +76,13 @@ class LoraAgent < SensorAgent
 
     shr_h = @portal_conf['devices'][key_id]
     prm_h = shr_h['params']
-    fld_h = msg_hash[:fields]
+    fld_h = msg_hash[:payload_fields]
     puts "key id: #{key_id}, parameters: #{prm_h}, fields: #{fld_h}"
 
     # Format the measures with the right sensor ids
     measures = {
         'data' => [{
-          'recorded_at' => "#{msg_hash[:metadata][0][:server_time]}",
+          'recorded_at' => "#{msg_hash[:metadata][:time]}",
           'sensors' => [
             {
   	         'id' => shr_h['no2a_sensor_id'],
@@ -100,7 +135,7 @@ class LoraAgent < SensorAgent
 
   def getDevID(msg_hash)
 
-    return msg_hash[:dev_eui]
+    return msg_hash[:dev_id]
 
   end
 
@@ -112,15 +147,15 @@ class LoraAgent < SensorAgent
 
     if (!msg_hash.nil?)
       my_hash = msg_hash
-      if (msg_hash[:dev_eui].to_i < 0)
-        fake_id = msg_hash[:dev_eui].to_i - 1
+      if (msg_hash[:dev_id].to_i < 0)
+        fake_id = msg_hash[:dev_id].to_i - 1
       end
     end
 
-    my_hash[:dev_eui] = fake_id
-    msg_hash[:metadata][0][:modulation] = error_msg
+    my_hash[:dev_id] = fake_id
+    msg_hash[:metadata][:modulation] = error_msg
 
-    puts "New fake msg id: " + my_hash[:dev_eui].to_s
+    puts "New fake msg id: " + my_hash[:dev_id].to_s
 
     return my_hash
 
