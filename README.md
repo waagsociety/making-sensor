@@ -2,6 +2,8 @@
 
 This repository contains several modules for the setting up of Making Sense experiments.
 
+The results of the air quality experiment have been published and can be found at http://www.atmos-meas-tech-discuss.net/amt-2017-43/
+
 The module `server` contains the settings and the code written for the front-end and back-end of the infrastructure, while `sensor_kit` contains software and specifications for the sensors.
 
 ## Data files
