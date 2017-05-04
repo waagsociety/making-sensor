@@ -134,8 +134,13 @@ class SensorAgent
           next
         end
 
-      # Post sensor data to smartcitizen.me
 
+        # Do not post sensor startup messages
+        if ( msg_hash[:message] == "Sensor startup" )
+          next
+        end
+
+        # Post sensor data to smartcitizen.me
         device_id = -1
         key_id = -1
 
